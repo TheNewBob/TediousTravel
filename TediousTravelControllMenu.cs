@@ -10,6 +10,7 @@ using DaggerfallConnect.Arena2;
 using DaggerfallWorkshop.Game.Guilds;
 using DaggerfallWorkshop.Game.UserInterfaceWindows;
 using DaggerfallWorkshop.Game;
+using System;
 
 namespace TediousTravel
 {
@@ -17,63 +18,72 @@ namespace TediousTravel
     {
 
         #region UI Rects
-
-        Rect timeFasterRect = new Rect(4, 13, 48, 24);
-        Rect timeLabelRect = new Rect(53, 13, 48, 24);
-        Rect timeSlowerRect = new Rect(102, 13, 48, 24);
-        Rect campButtonRect = new Rect(0, 50, 105, 41);
-        Rect interruptButtonRect = new Rect(4, 10, 16, 8);
-        Rect destinationLabelRect = new Rect(33, 26, 40, 10);
-
+        Rect mainPanelRect = new Rect(0, 0, 215, 24);
+        Rect destinationRect = new Rect(5, 2, 210, 10);
+        Rect fasterButtonRect = new Rect(5, 12, 20, 10);
+        Rect timeCompressionRect = new Rect(30, 12, 20, 10);
+        Rect slowerButtonRect = new Rect(55, 12, 20, 10);
+        Rect mapButtonRect = new Rect(80, 12, 40, 10);
+        Rect interruptButtonRect = new Rect(125, 12, 40, 10);
+        Rect cancelButtonRect = new Rect(170, 12, 40, 10);
         #endregion
 
         #region UI Controls
 
-        Button timeFasterButton;
-        Button timeSlowerButton;
-        Button campButton;
+        Panel mainPanel = null;
+        Button fasterButton;
+        Button slowerButton;
         Button interruptButton;
-
-        Panel mainPanel = new Panel();
-        TextLabel timeLabel = new TextLabel();
-        TextLabel destinationLabel = new TextLabel();
-
+        Button cancelButton;
+        Button mapButton;
+        TextBox destinationTextbox;
+        TextBox timeCompressionTextbox;
         #endregion
 
         #region UI Textures
 
         Texture2D baseTexture;
-//        Texture2D hoursPastTexture;
-//        Texture2D hoursRemainingTexture;
+        Texture2D disabledTexture;
 
         #endregion
 
         #region Fields
 
-        const string baseTextureName = "REST00I0.IMG";              // Rest type
-        const string hoursPastTextureName = "REST01I0.IMG";         // "Hours past"
-        const string hoursRemainingTextureName = "REST02I0.IMG";    // "Hours remaining"
-
-
-        PlayerEntity playerEntity;
-        DaggerfallHUD hud;
+        public bool isShowing = false;
 
         KeyCode toggleClosedBinding;
-        TediousTravel controller;
 
-        #endregion
+        Color mainPanelBackgroundColor = new Color(0.0f, 0f, 0.0f, 1.0f);
+        Color buttonBackgroundColor = new Color(0.0f, 0.5f, 0.0f, 0.4f);
+        Color cancelButtonBackgroundColor = new Color(0.7f, 0.0f, 0.0f, 0.4f);
+        string _destinationName = "";
 
-        #region Enums
+        int timeCompressionSetting = 10;
+
+        TediousTravelMap travelMap = null;
+
+        public int TimeCompressionSetting { get { return timeCompressionSetting; } }
+        public string DestinationName
+        {
+            set
+            {
+                _destinationName = "Travelling to " + value;
+                if (destinationTextbox != null)
+                    destinationTextbox.Text = _destinationName;
+            }
+        }
 
         #endregion
 
         #region Constructors
 
-        public TediousTravelControllMenu(IUserInterfaceManager uiManager, TediousTravel controller)
+        public TediousTravelControllMenu(IUserInterfaceManager uiManager, TediousTravelMap mapWindow)
             : base(uiManager)
         {
-            this.controller = controller;
-            this.PauseWhileOpen = false;
+            // Clear background
+            ParentPanel.BackgroundColor = Color.clear;
+            travelMap = mapWindow;
+            this.pauseWhileOpened = false;
         }
 
         #endregion
@@ -82,45 +92,54 @@ namespace TediousTravel
 
         protected override void Setup()
         {
-            
-            // Load all the textures used by rest interface
-            LoadTextures();
-
-            // Hide world while resting
-            //ParentPanel.BackgroundColor = Color.black;
 
             // Create interface panel
-
+            mainPanel = DaggerfallUI.AddPanel(mainPanelRect);
             mainPanel.HorizontalAlignment = HorizontalAlignment.Center;
             mainPanel.VerticalAlignment = VerticalAlignment.Top;
-            mainPanel.BackgroundTexture = baseTexture;
-            Rect mainPanelRect = new Rect(
-                    new Vector2(0, 50),
-                    new Vector2(ImageReader.GetImageData("REST00I0.IMG", 0, 0, false, false).width, ImageReader.GetImageData("REST00I0.IMG", 0, 0, false, false).height)
-                );
-            DaggerfallUI.AddPanel(mainPanelRect, mainPanel);
+            mainPanel.BackgroundColor = mainPanelBackgroundColor;
 
-            //mainPanel.Position = new Vector2(0, 50);
-            // mainPanel.Size = new Vector2(ImageReader.GetImageData("REST00I0.IMG", 0, 0, false, false).width, ImageReader.GetImageData("REST00I0.IMG", 0, 0, false, false).height);
+            // destination description
+            destinationTextbox = DaggerfallUI.AddTextBox(destinationRect, _destinationName, mainPanel);
+            destinationTextbox.ReadOnly = true;
+            // increase time compression button
+            fasterButton = DaggerfallUI.AddButton(fasterButtonRect, mainPanel);
+            fasterButton.OnMouseClick += FasterButton_OnMouseClick;
+            fasterButton.BackgroundColor = buttonBackgroundColor;
+            fasterButton.Label.Text = "+";
+            //display time compression
+            timeCompressionTextbox = DaggerfallUI.AddTextBox(timeCompressionRect, TimeCompressionSetting + "x", mainPanel);
+            timeCompressionTextbox.ReadOnly = true;
 
-            //            NativePanel.Components.Add(mainPanel);
+            // decrease time compression button
+            slowerButton = DaggerfallUI.AddButton(slowerButtonRect, mainPanel);
+            slowerButton.OnMouseClick += SlowerButton_OnMouseClick;
+            slowerButton.BackgroundColor = buttonBackgroundColor;
+            slowerButton.Label.Text = "-";
 
-            // Create buttons
-            timeFasterButton = DaggerfallUI.AddButton(timeFasterRect, mainPanel);
-            timeFasterButton.OnMouseClick += timeFaster_OnMouseClick;
-            timeSlowerButton = DaggerfallUI.AddButton(timeSlowerRect, mainPanel);
-            timeSlowerButton.OnMouseClick += timeSlower_OnMouseClick;
-            campButton = DaggerfallUI.AddButton(campButtonRect, mainPanel);
-            campButton.OnMouseClick += campButton_OnMouseClick;
+            // map button
+            mapButton = DaggerfallUI.AddButton(mapButtonRect, mainPanel);
+            mapButton.OnMouseClick += (_, __) => {
+                uiManager.PushWindow(travelMap);
+                travelMap.IsShowing = true;
+            };
+            mapButton.BackgroundColor = buttonBackgroundColor;
+            mapButton.Label.Text = "Map";
+
+            // interrupt travel button
             interruptButton = DaggerfallUI.AddButton(interruptButtonRect, mainPanel);
-            interruptButton.OnMouseClick += campButton_OnMouseClick;
+            interruptButton.OnMouseClick += (_, __) => { CloseWindow(); };
+            interruptButton.BackgroundColor = buttonBackgroundColor;
+            interruptButton.Label.Text = "Interrupt";
 
-            //controller.StartFastTravel();
+            // cancel travel button
+            cancelButton = DaggerfallUI.AddButton(cancelButtonRect, mainPanel);
+            cancelButton.OnMouseClick += (_, __) => { CancelWindow(); };
+            cancelButton.BackgroundColor = cancelButtonBackgroundColor;
+            cancelButton.Label.Text = "Cancel";
 
-            //timeLabel = DaggerfallUI.AddTextLabel()
+            NativePanel.Components.Add(mainPanel);
 
-            // Store toggle closed binding for this window
-//            toggleClosedBinding = InputManager.Instance.GetBinding(InputManager.Actions.Rest);
         }
 
         #endregion
@@ -130,83 +149,70 @@ namespace TediousTravel
         public override void Update()
         {
             base.Update();
-
         }
 
         public override void Draw()
         {
             base.Draw();
-
-            // Draw vitals
-            if (hud != null)
-            {
-                hud.HUDVitals.Draw();
-            }
+            DaggerfallUI.Instance.DaggerfallHUD.HUDVitals.Draw();
+//            DaggerfallUI.Instance.DaggerfallHUD.HUDCompass.Draw();
+            DaggerfallUI.Instance.DaggerfallHUD.ShowMidScreenText = true;
         }
 
         public override void OnPush()
         {
             base.OnPush();
-
-            // Get references
-            playerEntity = GameManager.Instance.PlayerEntity;
-            hud = DaggerfallUI.Instance.DaggerfallHUD;
+            isShowing = true;
         }
 
         public override void OnPop()
         {
             base.OnPop();
-
-//            Debug.Log(string.Format("Resting raised time by {0} hours total", totalHours));
+            isShowing = false;
         }
 
-        #endregion
-
-        #region Public Methods
-
-        /// <summary>
-        /// Manually abort rest for enemy spawn.
-        /// </summary>
-  
         #endregion
 
         #region Private Methods
-
-        void LoadTextures()
-        {
-            baseTexture = ImageReader.GetTexture(baseTextureName);
-            //hoursPastTexture = ImageReader.GetTexture(hoursPastTextureName);
-            //hoursRemainingTexture = ImageReader.GetTexture(hoursRemainingTextureName);
-        }
-
 
         #endregion
 
         #region Event Handlers
 
-        private void timeFaster_OnMouseClick(BaseScreenComponent sender, Vector2 position)
+        private void FasterButton_OnMouseClick(BaseScreenComponent sender, Vector2 position)
+        {
+            if (timeCompressionSetting == 1)
+                timeCompressionSetting = 5;
+            else timeCompressionSetting += 5;
+            timeCompressionTextbox.Text = timeCompressionSetting.ToString() + "x";
+            RaiseOnTimeCompressionChangedEvent(timeCompressionSetting);
+        }
+
+        private void SlowerButton_OnMouseClick(BaseScreenComponent sender, Vector2 position)
+        {
+            timeCompressionSetting = Mathf.Max(1, timeCompressionSetting - 5);
+            timeCompressionTextbox.Text = timeCompressionSetting.ToString() + "x";
+            RaiseOnTimeCompressionChangedEvent(timeCompressionSetting);
+        }
+
+        private void CampButton_OnMouseClick(BaseScreenComponent sender, Vector2 position)
         {
         }
 
-        private void timeSlower_OnMouseClick(BaseScreenComponent sender, Vector2 position)
+        private void CancelButton_OnMouseClick(BaseScreenComponent sender, Vector2 position)
         {
         }
 
-        private void campButton_OnMouseClick(BaseScreenComponent sender, Vector2 position)
+        // events
+        public delegate void OnTimeCOmpressionChangedHandler(int newTimeCompression);
+        public event OnTimeCOmpressionChangedHandler OnTimeCompressionChanged;
+        void RaiseOnTimeCompressionChangedEvent(int newTimeCompression)
         {
+            if (OnTimeCompressionChanged != null)
+                OnTimeCompressionChanged(newTimeCompression);
         }
 
-        private void interruptButton_OnMouseClick(BaseScreenComponent sender, Vector2 position)
-        {
-            DaggerfallUI.Instance.PopToHUD();
-        }
-
-        private void RestFinishedPopup_OnClose()
-        {
-            DaggerfallUI.Instance.PopToHUD();
-        }
 
         #endregion
-
     }
 }

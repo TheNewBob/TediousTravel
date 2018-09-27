@@ -24,8 +24,6 @@ namespace TediousTravel
         private bool allowSetYaw = false;
         private bool inDestinationMapPixel = false;
         private InputManager inputManager = InputManager.Instance;
-        // notes if the OnLocationPassedEvent has already been fired since the player entered a new map pixel.
-        private bool locationPassedEventFired = false;
 
 
         // some reflection-fu to get access to a private function. Don't judge me, if there was another way I'd use it.
@@ -35,21 +33,16 @@ namespace TediousTravel
         public PlayerAutoPilot(ContentReader.MapSummary destinationSummary)
         {
             this.destinationSummary = destinationSummary;
-            init();
+            Init();
         }
 
-        private void init()
+        private void Init()
         {
             destinationMapPixel = MapsFile.GetPixelFromPixelID(destinationSummary.ID);
             Debug.Log("destination map pixel: " + destinationMapPixel.X + ", " + destinationMapPixel.Y);
 
             // get exact coordinates of destination
-            DFLocation targetLocation;
-            if (!DaggerfallUnity.Instance.ContentReader.GetLocation(
-                destinationSummary.RegionIndex, destinationSummary.MapIndex, out targetLocation))
-                throw new ArgumentException("Failed to retrieve desired location!");
-
-            destinationWorldRect = GetLocationRect(targetLocation);
+            destinationWorldRect = GetLocationRect(destinationSummary);
             //grow the rect a bit so fast travel cancels shortly before entering the location
             destinationWorldRect.xMin -= 1000;
             destinationWorldRect.xMax += 1000;
@@ -82,14 +75,6 @@ namespace TediousTravel
                 OrientPlayer();
 
                 inDestinationMapPixel = lastPlayerMapPixel.X == destinationMapPixel.X && lastPlayerMapPixel.Y == destinationMapPixel.Y;
-                locationPassedEventFired = false;
-            }
-
-            if (!locationPassedEventFired && playerGPS.HasCurrentLocation)
-            {
-                RaiseOnPassingLocationEvent(playerGPS.CurrentLocation.Name);
-                locationPassedEventFired = true;
-                Debug.Log("passing location " + playerGPS.CurrentLocation.Name);
             }
 
             // disable player mouselook, except if new yaw was set.
@@ -147,6 +132,15 @@ namespace TediousTravel
             return (float)angleDeg;
         }
 
+
+        public static Rect GetLocationRect(ContentReader.MapSummary mapSummary)
+        {
+            DFLocation targetLocation;
+            if (!DaggerfallUnity.Instance.ContentReader.GetLocation(
+                    mapSummary.RegionIndex, mapSummary.MapIndex, out targetLocation))
+                throw new ArgumentException("TediousTravel destination not found!");
+            return GetLocationRect(targetLocation);
+        }
 
         // TODO: Will be a member of DaggerfallLocation in a future build, remove when released.
         /// <summary>

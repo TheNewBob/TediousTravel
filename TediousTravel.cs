@@ -10,50 +10,86 @@ using DaggerfallConnect.Utility;
 using DaggerfallWorkshop;
 using DaggerfallWorkshop.Utility;
 using DaggerfallConnect.Arena2;
+using DaggerfallConnect;
 
 namespace TediousTravel
-{ 
+{
     public class TediousTravel : MonoBehaviour
     {
         private TediousTravelMap travelMap = null;
-        private TestPopup travelUi = null;
+        private TediousTravelControllMenu travelUi = null;
         private InputManager inputManager = null;
         private ContentReader.MapSummary destinationSummary;
         private PlayerAutoPilot playerAutopilot = null;
+        private string destinationName = "";
+        private PlayerCollision playerCollision = null;
+        private AudioSource ridingAudioSource;
+
+        public TediousTravelMap TravelMap { get { return travelMap; } }
 
         private void Start()
         {
             DaggerfallUI.UIManager.OnWindowChange += travelMapInterceptor;
             travelMap = new TediousTravelMap(DaggerfallUI.UIManager, this);
-            travelMap.OnClose += () => {
-                travelMap.IsShowing = false;
-            };
-            travelMap.OnCancel += (sender) => {
-                travelMap.IsShowing = false;
-            };
-            travelUi = new TestPopup(DaggerfallUI.UIManager);
+            travelUi = new TediousTravelControllMenu(DaggerfallUI.UIManager, travelMap);
             travelUi.OnCancel += (sender) => {
-                StopFastTravel();
-                travelUi.isShowing = false;
-                Debug.Log("travelUi closed");
-            };
-            travelUi.OnClose += () => {
-                StopFastTravel();
-                travelUi.isShowing = false;
+                destinationName = "";
                 Debug.Log("travelUi canceled");
             };
+            travelUi.OnClose += () => {
+                InterruptFastTravel();
+                Debug.Log("travelUi closed");
+            };
+            travelUi.OnTimeCompressionChanged += (newTimeCompression) => { Time.timeScale = newTimeCompression; };
+
+            ridingAudioSource = GameManager.Instance.TransportManager.GetComponent<AudioSource>();
+            Debug.Log("riding audio source: " + ridingAudioSource);
+
         }
 
         public void travelMapInterceptor(object sender, EventArgs e)
         {
+            Debug.Log(GameManager.Instance.SpeedChanger.GetBaseSpeed());
             var manager = (UserInterfaceManager)sender;
             var window = manager.TopWindow;
             if (!travelMap.IsShowing && window.GetType() == typeof(DaggerfallTravelMapWindow))
             {
+
                 DaggerfallTravelMapWindow originalTravelMap = window as DaggerfallTravelMapWindow;
+                // check if the travel map was brought up to check for a destination for teleportation and let it proceed if yes.
+                var isTeleportation = originalTravelMap.GetType().GetField("teleportationTravel",
+                    System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                if ((bool)isTeleportation.GetValue(originalTravelMap)) return;
+
                 originalTravelMap.CloseWindow();
-                manager.PushWindow(travelMap);
-                travelMap.IsShowing = true;
+
+                // if a destination was picked, ask whether to resume or open map
+                if (destinationName != "")
+                {
+                    DaggerfallMessageBox confirmTravelBox = new DaggerfallMessageBox(manager,
+                        DaggerfallMessageBox.CommonMessageBoxButtons.YesNo,
+                        "Resume travel to " + destinationName + "?",
+                        manager.TopWindow);
+                    confirmTravelBox.OnButtonClick += (_sender, button) =>
+                    {
+                        if (button == DaggerfallMessageBox.MessageBoxButtons.Yes)
+                        {
+                            _sender.CloseWindow();
+                            StartFastTravel(destinationSummary);
+                        }
+                        else
+                        {
+                            manager.PopWindow();
+                            manager.PushWindow(travelMap);
+                        }
+                    };
+                    confirmTravelBox.Show();
+                }
+                else
+                {
+                    manager.PushWindow(travelMap);
+                }
+
             }
         }
 
@@ -65,7 +101,6 @@ namespace TediousTravel
                 if (!travelUi.isShowing)
                 {
                     DaggerfallUI.UIManager.PushWindow(travelUi);
-                    travelUi.isShowing = true;
                 }
 
                 playerAutopilot.Update();
@@ -83,29 +118,58 @@ namespace TediousTravel
 
         public void StartFastTravel(ContentReader.MapSummary destinationSummary)
         {
-            this.destinationSummary = destinationSummary;
-            GameManager.Instance.PlayerActivate.GetComponentInParent<PlayerFootsteps>().enabled = false;
+            DFLocation targetLocation;
+            if (DaggerfallUnity.Instance.ContentReader.GetLocation(
+                destinationSummary.RegionIndex, destinationSummary.MapIndex, out targetLocation))
+            {
+                destinationName = targetLocation.Name;
+                travelUi.DestinationName = destinationName;
+            }
+            else throw new ArgumentException("TediousTravel destination not found!");
+
             playerAutopilot = new PlayerAutoPilot(destinationSummary);
             playerAutopilot.OnArrival += () =>
             {
-                travelUi.CloseWindow();
+                travelUi.CancelWindow();
                 DaggerfallUI.Instance.DaggerfallHUD.SetMidScreenText("You have arrived at your destination", 5f);
             };
-            Time.timeScale = 20;
+
+            this.destinationSummary = destinationSummary;
+            DisableAnnoyingSounds();
+            Time.timeScale = travelUi.TimeCompressionSetting;
             Debug.Log("started tedious travel");
         }
 
-        public void StopFastTravel()
+
+        /// <summary>
+        /// Stops fast travel, but leaves current destination active
+        /// </summary>
+        public void InterruptFastTravel()
         {
             Time.timeScale = 1;
             playerAutopilot = null;
             GameManager.Instance.PlayerMouseLook.enableMouseLook = true;
             GameManager.Instance.PlayerMouseLook.lockCursor = true;
             GameManager.Instance.PlayerMouseLook.simpleCursorLock = false;
-            GameManager.Instance.PlayerActivate.GetComponentInParent<PlayerFootsteps>().enabled = true;
-            Debug.Log("stopped tedious travel");
+            EnableAnnoyingSounds();
         }
 
+        /// <summary>
+        /// Footsteps will drive you crazy at time acceleration.
+        /// Horse hoofs are bearable but might be changed in the future not to be.
+        /// And the neighing becomes just plain torture! ;)
+        /// </summary>
+        private void DisableAnnoyingSounds()
+        {
+            GameManager.Instance.PlayerActivate.GetComponentInParent<PlayerFootsteps>().enabled = false;
+            GameManager.Instance.TransportManager.RidingVolumeScale = 0f;
+        }
+
+        private void EnableAnnoyingSounds()
+        {
+            GameManager.Instance.PlayerActivate.GetComponentInParent<PlayerFootsteps>().enabled = false;
+            GameManager.Instance.TransportManager.RidingVolumeScale = 1f;
+        }
 
 
         //this method will be called automatically by the modmanager after the main game scene is loaded.

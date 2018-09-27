@@ -22,6 +22,8 @@ using Wenzil.Console.Commands;
 using DaggerfallWorkshop;
 using DaggerfallWorkshop.Game.UserInterfaceWindows;
 using DaggerfallWorkshop.Game;
+using DaggerfallWorkshop.Game.Utility;
+using DaggerfallWorkshop.Game.Items;
 
 namespace TediousTravel
 {
@@ -277,6 +279,7 @@ namespace TediousTravel
         public override void OnPush()
         {
             base.OnPush();
+            isShowing = true;
 
             if (base.IsSetup)
             {
@@ -287,6 +290,7 @@ namespace TediousTravel
 
         public override void OnPop()
         {
+            isShowing = false;
             base.OnPop();
             teleportationTravel = false;
         }
@@ -422,30 +426,34 @@ namespace TediousTravel
             // Dungeons filter button
             //dungeonsFilterButton.Position = new Vector2(50, 175);
             //dungeonsFilterButton.Size = new Vector2(dungeonsFilterButtonSrcRect.width, dungeonsFilterButtonSrcRect.height);
+            dungeonsFilterButton = DaggerfallUI.AddButton(
+                new Rect(50, 175, dungeonsFilterButtonSrcRect.width, dungeonsFilterButtonSrcRect.height), NativePanel);
             dungeonsFilterButton.Name = "dungeonsFilterButton";
             dungeonsFilterButton.OnMouseClick += FilterButtonClickHandler;
-            NativePanel.Components.Add(dungeonsFilterButton);
 
             // Temples filter button
             //templesFilterButton.Position = new Vector2(50, 186);
             //templesFilterButton.Size = new Vector2(templesFilterButtonSrcRect.width, templesFilterButtonSrcRect.height);
+            templesFilterButton = DaggerfallUI.AddButton(
+                new Rect(50, 186, templesFilterButtonSrcRect.width, templesFilterButtonSrcRect.height), NativePanel);    
             templesFilterButton.Name = "templesFilterButton";
             templesFilterButton.OnMouseClick += FilterButtonClickHandler;
-            NativePanel.Components.Add(templesFilterButton);
 
             // Homes filter button
             //homesFilterButton.Position = new Vector2(149, 175);
             //homesFilterButton.Size = new Vector2(homesFilterButtonSrcRect.width, homesFilterButtonSrcRect.height);
+            homesFilterButton = DaggerfallUI.AddButton(
+                new Rect(149, 175, homesFilterButtonSrcRect.width, homesFilterButtonSrcRect.height), NativePanel);
             homesFilterButton.Name = "homesFilterButton";
             homesFilterButton.OnMouseClick += FilterButtonClickHandler;
-            NativePanel.Components.Add(homesFilterButton);
 
             // Towns filter button
             //townsFilterButton.Position = new Vector2(149, 186);
             //townsFilterButton.Size = new Vector2(townsFilterButtonSrcRect.width, townsFilterButtonSrcRect.height);
+            townsFilterButton = DaggerfallUI.AddButton(
+                new Rect(149, 186, townsFilterButtonSrcRect.width, townsFilterButtonSrcRect.height), NativePanel);
             townsFilterButton.Name = "townsFilterButton";
             townsFilterButton.OnMouseClick += FilterButtonClickHandler;
-            NativePanel.Components.Add(townsFilterButton);
 
             // Horizontal arrow button
             //horizontalArrowButton.Position = new Vector2(231, 176);
@@ -798,21 +806,11 @@ namespace TediousTravel
                     StopIdentify(true);
                 else
                 {
-                    //CreatePopUpWindow();
-                    initTravel();
-                    Debug.Log("Now starting fast travelling");
-//                    uiManager.PopWindow();
-//                    var controlls = new TediousTravelControllMenu(uiManager, controller);
+                    CreateConfirmTravelWindow();
                 }
             }
             else if (MouseOverOtherRegion)      //if clicked while mouse over other region & not a location, switch to that region
                 OpenRegionPanel(mouseOverRegion);
-        }
-
-        void initTravel()
-        {
-           this.CloseWindow();
-           controller.StartFastTravel(locationSummary);
         }
 
         void ExitButtonClickHandler(BaseScreenComponent sender, Vector2 position)
@@ -1226,6 +1224,60 @@ namespace TediousTravel
             else
                 townsFilterButton.BackgroundTexture = townsFilterButtonDisabled;
         }
+
+        void CreateConfirmTravelWindow()
+        {
+            var destinationRect = PlayerAutoPilot.GetLocationRect(locationSummary);
+            var destinationWorldPos = destinationRect.center;
+            var playerPos = new Vector2(GameManager.Instance.PlayerGPS.WorldX, GameManager.Instance.PlayerGPS.WorldZ);
+            var distance = (playerPos - destinationWorldPos).magnitude;
+            // 3.5 units per second in-game (not realtime second) seems to approximate 1 unit of speed...
+            var seconds = distance / (3.5 * GameManager.Instance.SpeedChanger.GetBaseSpeed());
+
+/*            var travelTimeCalculator = new TravelTimeCalculator();
+            var minutes = travelTimeCalculator.CalculateTravelTime(
+                MapsFile.GetPixelFromPixelID(locationSummary.ID),
+                false, false, false,
+                GameManager.Instance.PlayerMotor.IsRiding,
+                GameManager.Instance.PlayerEntity.Items.Contains(
+                    ItemGroups.Transportation, (int)Transportation.Small_cart));*/
+
+            var travelDuration = "";
+            // if estimated time is less than 24 hours, show total hours.
+            // if it is more, show estimated time in days, assuming 16 hours of travel and 8 hours of rest per day.
+            /*            if (minutes < 1440) travelDuration = ((int)Math.Ceiling(minutes / 60f)).ToString() + " hours. other guess: " + ((int)Math.Ceiling(seconds / 3600)).ToString();
+                        else travelDuration = ((int)Math.Ceiling(minutes /960f)).ToString() + " days";*/
+
+            if (seconds < 86400) travelDuration = ((int)Math.Ceiling(seconds / 3600)).ToString() + " hours.";
+            else travelDuration = ((int)Math.Ceiling(seconds / 28800)).ToString() + " days";
+
+            DaggerfallMessageBox confirmTravelBox = new DaggerfallMessageBox(
+                uiManager,
+                DaggerfallMessageBox.CommonMessageBoxButtons.YesNo,
+                "Estimated travel time is " + travelDuration + ". Begin journey?",
+                this);
+
+            confirmTravelBox.OnButtonClick += (_sender, button) =>
+            {
+                if (button == DaggerfallMessageBox.MessageBoxButtons.Yes)
+                {
+                    uiManager.PopWindow();
+                    InitTravel();
+                }
+                else
+                {
+                    uiManager.PopWindow();
+                }
+            };
+            confirmTravelBox.Show();
+        }
+
+        void InitTravel()
+        {
+            this.CloseWindow();
+            controller.StartFastTravel(locationSummary);
+        }
+
 
         #endregion
 
