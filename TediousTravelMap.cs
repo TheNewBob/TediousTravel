@@ -53,8 +53,6 @@ namespace TediousTravel
         const int identifyFlashCount = 4;
         const float identifyFlashInterval = 0.5f;
 
-        DaggerfallTravelPopUp popUp;
-
         Dictionary<string, Vector2> offsetLookup = new Dictionary<string, Vector2>();
         string[] selectedRegionMapNames;    //different maps for selected region
 
@@ -125,7 +123,6 @@ namespace TediousTravel
         bool zoom = false;    //toggles zoom mode
         bool draw = true;     //draws textures to panel
         bool loadNewImage = true;     //loads current map image
-        bool teleportationTravel = false;    // Indicates travel should be by teleportation
         bool isShowing = false;
 
         static bool revealUndiscoveredLocations; // flag used to indicate cheat/debugging mode for revealing undiscovered locations
@@ -179,11 +176,6 @@ namespace TediousTravel
         bool FindingLocation
         {
             get { return identifying && findingLocation && RegionSelected; }
-        }
-
-        public void ActivateTeleportationTravel()
-        {
-            teleportationTravel = true;
         }
 
         #endregion
@@ -292,7 +284,6 @@ namespace TediousTravel
         {
             isShowing = false;
             base.OnPop();
-            teleportationTravel = false;
         }
 
         public override void Update()
@@ -1526,47 +1517,7 @@ namespace TediousTravel
                 return 1;
         }
 
- /*       void CreateConfirmationPopUp()
-        {
-            const int doYouWishToTravelToTextId = 31;
-
-            if (!locationSelected)
-                return;
-
-            // Get text tokens
-            TextFile.Token[] textTokens = DaggerfallUnity.Instance.TextProvider.GetRSCTokens(doYouWishToTravelToTextId);
-
-            // Hack to set location name in text token for now
-            textTokens[2].text = textTokens[2].text.Replace("%tcn", currentDFRegion.MapNames[locationSummary.MapIndex]);
-
-            DaggerfallMessageBox messageBox = new DaggerfallMessageBox(uiManager, this);
-            messageBox.SetTextTokens(textTokens);
-            messageBox.AddButton(DaggerfallMessageBox.MessageBoxButtons.Yes);
-            messageBox.AddButton(DaggerfallMessageBox.MessageBoxButtons.No);
-            messageBox.OnButtonClick += ConfirmTravelPopupButtonClick;
-            uiManager.PushWindow(messageBox);
-        }*/
-
-/*        void CreatePopUpWindow()
-        {
-            DFPosition pos = MapsFile.GetPixelFromPixelID(locationSummary.ID);
-            if (teleportationTravel)
-            {
-                DaggerfallTeleportPopUp telePopup = new DaggerfallTeleportPopUp(DaggerfallUI.UIManager, DaggerfallUI.UIManager.TopWindow, this);
-                telePopup.DestinationPos = pos;
-                telePopup.DestinationName = currentDFRegion.MapNames[locationSummary.MapIndex];
-                DaggerfallUI.UIManager.PushWindow(telePopup);
-            }
-            else
-            {
-                if (popUp == null)
-                {
-                    popUp = new DaggerfallTravelPopUp(DaggerfallUI.UIManager, DaggerfallUI.UIManager.TopWindow, this);
-                }
-                popUp.EndPos = pos;
-                DaggerfallUI.UIManager.PushWindow(popUp);
-            }
-        }*/
+ 
 
         #endregion
 
@@ -1587,8 +1538,9 @@ namespace TediousTravel
         // Stop region identification & location crosshair
         void StopIdentify(bool createPopUp = true)
         {
-            /*if (FindingLocation && createPopUp)
-                CreateConfirmationPopUp();*/
+            if (FindingLocation && createPopUp)
+                CreateConfirmTravelWindow();
+
             identifying = false;
             identifyState = false;
             identifyChanges = 0;

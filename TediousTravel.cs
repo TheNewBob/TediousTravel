@@ -49,7 +49,6 @@ namespace TediousTravel
 
         public void travelMapInterceptor(object sender, EventArgs e)
         {
-            Debug.Log(GameManager.Instance.SpeedChanger.GetBaseSpeed());
             var manager = (UserInterfaceManager)sender;
             var window = manager.TopWindow;
             if (!travelMap.IsShowing && window.GetType() == typeof(DaggerfallTravelMapWindow))
@@ -167,7 +166,7 @@ namespace TediousTravel
 
         private void EnableAnnoyingSounds()
         {
-            GameManager.Instance.PlayerActivate.GetComponentInParent<PlayerFootsteps>().enabled = false;
+            GameManager.Instance.PlayerActivate.GetComponentInParent<PlayerFootsteps>().enabled = true;
             GameManager.Instance.TransportManager.RidingVolumeScale = 1f;
         }
 

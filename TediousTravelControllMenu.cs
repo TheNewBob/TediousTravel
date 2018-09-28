@@ -121,7 +121,6 @@ namespace TediousTravel
             mapButton = DaggerfallUI.AddButton(mapButtonRect, mainPanel);
             mapButton.OnMouseClick += (_, __) => {
                 uiManager.PushWindow(travelMap);
-                travelMap.IsShowing = true;
             };
             mapButton.BackgroundColor = buttonBackgroundColor;
             mapButton.Label.Text = "Map";
