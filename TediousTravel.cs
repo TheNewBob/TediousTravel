@@ -40,6 +40,7 @@ namespace TediousTravel
                 InterruptFastTravel();
                 Debug.Log("travelUi closed");
             };
+
             travelUi.OnTimeCompressionChanged += (newTimeCompression) => { Time.timeScale = newTimeCompression; };
 
             ridingAudioSource = GameManager.Instance.TransportManager.GetComponent<AudioSource>();

@@ -170,6 +170,15 @@ namespace TediousTravel
             isShowing = false;
         }
 
+        /// <summary>
+        /// Game is stuck in paused mode when returning from modal UI, have to unstick it manually.
+        /// </summary>
+        public override void OnReturn()
+        {
+            base.OnReturn();
+            GameManager.Instance.PauseGame(false);
+        }
+
         #endregion
 
         #region Private Methods
