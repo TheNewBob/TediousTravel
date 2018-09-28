@@ -812,6 +812,7 @@ namespace TediousTravel
         void AtButtonClickHandler(BaseScreenComponent sender, Vector2 position)
         {
             // Identify region or map location
+            findingLocation = false;
             if (RegionSelected == false)
                 StartIdentify();
             else
@@ -1527,12 +1528,14 @@ namespace TediousTravel
         // Start region identification & location crosshair
         void StartIdentify()
         {
+            var oldFindingLocation = findingLocation;
             if (identifying)//stop animation
-                StopIdentify();
+                StopIdentify(false);
             identifying = true;
             identifyState = false;
             identifyChanges = 0;
             identifyLastChangeTime = 0;
+            findingLocation = oldFindingLocation;
         }
 
         // Stop region identification & location crosshair
