@@ -109,18 +109,15 @@ namespace TediousTravel
 
         private void OrientPlayer()
         {
-            Debug.Log("orienting player");
             var playerPos = new DFPosition(playerGPS.WorldX, playerGPS.WorldZ);
-            Debug.Log("Player world position: " + playerPos.X.ToString() + ", " + playerPos.Y.ToString());
-
             var yaw = CalculateYaw(playerPos,
                 new DFPosition(
                     (int)destinationWorldRect.center.x,
                     (int)destinationWorldRect.center.y));
 
             GameManager.Instance.PlayerMouseLook.Yaw = yaw;
+            GameManager.Instance.PlayerMouseLook.Pitch = 0f;
             allowSetYaw = true;
-            Debug.Log("yaw: " + yaw);
         }
 
 
