@@ -423,42 +423,34 @@ namespace TediousTravel
             dungeonsFilterButton.OnMouseClick += FilterButtonClickHandler;
 
             // Temples filter button
-            //templesFilterButton.Position = new Vector2(50, 186);
-            //templesFilterButton.Size = new Vector2(templesFilterButtonSrcRect.width, templesFilterButtonSrcRect.height);
             templesFilterButton = DaggerfallUI.AddButton(
                 new Rect(50, 186, templesFilterButtonSrcRect.width, templesFilterButtonSrcRect.height), NativePanel);    
             templesFilterButton.Name = "templesFilterButton";
             templesFilterButton.OnMouseClick += FilterButtonClickHandler;
 
             // Homes filter button
-            //homesFilterButton.Position = new Vector2(149, 175);
-            //homesFilterButton.Size = new Vector2(homesFilterButtonSrcRect.width, homesFilterButtonSrcRect.height);
             homesFilterButton = DaggerfallUI.AddButton(
                 new Rect(149, 175, homesFilterButtonSrcRect.width, homesFilterButtonSrcRect.height), NativePanel);
             homesFilterButton.Name = "homesFilterButton";
             homesFilterButton.OnMouseClick += FilterButtonClickHandler;
 
             // Towns filter button
-            //townsFilterButton.Position = new Vector2(149, 186);
-            //townsFilterButton.Size = new Vector2(townsFilterButtonSrcRect.width, townsFilterButtonSrcRect.height);
             townsFilterButton = DaggerfallUI.AddButton(
                 new Rect(149, 186, townsFilterButtonSrcRect.width, townsFilterButtonSrcRect.height), NativePanel);
             townsFilterButton.Name = "townsFilterButton";
             townsFilterButton.OnMouseClick += FilterButtonClickHandler;
 
             // Horizontal arrow button
-            //horizontalArrowButton.Position = new Vector2(231, 176);
-            //horizontalArrowButton.Size = new Vector2(leftArrowTexture.width, leftArrowTexture.height);
+            horizontalArrowButton = DaggerfallUI.AddButton(
+                new Rect(231, 176, leftArrowTexture.width, leftArrowTexture.height), NativePanel);
             horizontalArrowButton.Enabled = false;
-            NativePanel.Components.Add(horizontalArrowButton);
             horizontalArrowButton.Name = "horizontalArrowButton";
             horizontalArrowButton.OnMouseClick += ArrowButtonClickHandler;
 
             // Vertical arrow button
-            //verticalArrowButton.Position = new Vector2(254, 176);
-            //verticalArrowButton.Size = new Vector2(upArrowTexture.width, upArrowTexture.height);
+            verticalArrowButton = DaggerfallUI.AddButton(
+                new Rect(254, 176, upArrowTexture.width, upArrowTexture.height), NativePanel);
             verticalArrowButton.Enabled = false;
-            NativePanel.Components.Add(verticalArrowButton);
             verticalArrowButton.Name = "verticalArrowButton";
             verticalArrowButton.OnMouseClick += ArrowButtonClickHandler;
 
@@ -835,20 +827,7 @@ namespace TediousTravel
             }
         }
 
-        /// <summary>
-        /// Button handler for travel confirmation pop up. This is a temporary solution until implementing the final pop-up.
-        /// </summary>
-        void ConfirmTravelPopupButtonClick(DaggerfallMessageBox sender, DaggerfallMessageBox.MessageBoxButtons messageBoxButton)
-        {
-            sender.CloseWindow();
-            if (messageBoxButton == DaggerfallMessageBox.MessageBoxButtons.Yes)
-                //CreatePopUpWindow();
-                Debug.Log("now fast travelling");
-            else
-                StopIdentify();
-        }
-
-        /// <summary>
+         /// <summary>
         /// Handles click events for the arrow buttons in the region view
         /// </summary>
         /// <param name="sender"></param>
