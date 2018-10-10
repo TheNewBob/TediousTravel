@@ -53,6 +53,8 @@ namespace TediousTravel
         const int identifyFlashCount = 4;
         const float identifyFlashInterval = 0.5f;
 
+        bool portsFilter = false;
+
         Dictionary<string, Vector2> offsetLookup = new Dictionary<string, Vector2>();
         string[] selectedRegionMapNames;    //different maps for selected region
 
@@ -89,6 +91,7 @@ namespace TediousTravel
         Button exitButton;
         Button horizontalArrowButton = new Button();
         Button verticalArrowButton = new Button();
+        Button portButton = new Button();
         Button dungeonsFilterButton = new Button();
         Button templesFilterButton = new Button();
         Button homesFilterButton = new Button();
@@ -453,6 +456,14 @@ namespace TediousTravel
             verticalArrowButton.Enabled = false;
             verticalArrowButton.Name = "verticalArrowButton";
             verticalArrowButton.OnMouseClick += ArrowButtonClickHandler;
+
+            // Ports filter
+            portButton = DaggerfallUI.AddButton(
+                new Rect(231, 175, 45, 22), NativePanel);
+            portButton.BackgroundColor = new Color(0.0f, 0.5f, 0.0f, 0.4f);
+            portButton.Label.Text = "Ports";
+            portButton.OnMouseClick += PortButtonClickHandler;
+            portButton.Enabled = true;
 
             // Store toggle closed binding for this window
             toggleClosedBinding = InputManager.Instance.GetBinding(InputManager.Actions.TravelMap);
@@ -863,6 +874,40 @@ namespace TediousTravel
             draw = true;
         }
 
+        void PortButtonClickHandler(BaseScreenComponent sender, Vector2 position)
+        {
+            if (!portsFilter)
+            {
+                portsFilter = true;
+                dungeonsFilterButton.Enabled = false;
+                filterDungeons = true;
+                townsFilterButton.Enabled = false;
+                filterTowns = false;
+                templesFilterButton.Enabled = false;
+                filterTemples = true;
+                homesFilterButton.Enabled = false;
+                filterHomes = false;
+            }
+            else
+            {
+                portsFilter = false;
+                dungeonsFilterButton.Enabled = true;
+                filterDungeons = false;
+                townsFilterButton.Enabled = true;
+                filterTowns = false;
+                templesFilterButton.Enabled = true;
+                filterTowns = false;
+                homesFilterButton.Enabled = true;
+                filterTowns = false;
+
+                dungeonsFilterButton.BackgroundTexture = dungeonFilterButtonEnabled;
+                templesFilterButton.BackgroundTexture = templesFilterButtonEnabled;
+                homesFilterButton.BackgroundTexture = homesFilterButtonEnabled;
+                townsFilterButton.BackgroundTexture = townsFilterButtonEnabled;
+            }
+
+        }
+
         /// <summary>
         /// Handles click events for the filter buttons in the region view
         /// </summary>
@@ -926,6 +971,7 @@ namespace TediousTravel
             selectedRegion = region;
             selectedRegionMapNames = mapNames;
             regionTextureOverlayPanel.Enabled = true;
+            portButton.Enabled = false;
             borderPanel.Enabled = true;
             pixelBuffer = null;
             loadNewImage = true;
@@ -944,6 +990,7 @@ namespace TediousTravel
             locationSelected = false;
             mapIndex = 0;
             regionTextureOverlayPanel.Enabled = false;
+            portButton.Enabled = true;
             borderPanel.Enabled = false;
             horizontalArrowButton.Enabled = false;
             verticalArrowButton.Enabled = false;
@@ -1008,6 +1055,10 @@ namespace TediousTravel
                                 int index = GetPixelColorIndex(summary.LocationType);
                                 if (index == -1)
                                     continue;
+
+                                /*else if (portsFilter && (index != 13 || index != 11) && !isPortTown(summary))
+                                    continue;*/
+
                                 else
                                     pixelBuffer[offset] = locationPixelColors[index];
                             }
@@ -1020,6 +1071,24 @@ namespace TediousTravel
             {
                 Debug.LogError(string.Format("{0}\n{1}", ex.TargetSite, ex.Message));
             }
+        }
+
+        /// <summary>
+        /// Returns true if the passed mapsummary is a port town, false otherwise
+        /// </summary>
+        /// <param name="summary"></param>
+        /// <returns></returns>
+        bool isPortTown(ContentReader.MapSummary summary)
+        {
+            DFLocation targetLocation;
+            if (DaggerfallUnity.Instance.ContentReader.GetLocation(
+                    summary.RegionIndex, summary.MapIndex, out targetLocation))
+            {
+                if (targetLocation.Exterior.ExteriorData.PortTownAndUnknown != 0)
+                    return true;
+            }
+            Debug.Log(summary.LocationType.ToString() + " is not a port town");
+            return false;
         }
 
         Vector2 GetCoordinates()
@@ -1196,51 +1265,99 @@ namespace TediousTravel
                 townsFilterButton.BackgroundTexture = townsFilterButtonDisabled;
         }
 
-        void CreateConfirmTravelWindow()
+        void CreateShipTravelPopup()
         {
-            var destinationRect = PlayerAutoPilot.GetLocationRect(locationSummary);
-            var destinationWorldPos = destinationRect.center;
-            var playerPos = new Vector2(GameManager.Instance.PlayerGPS.WorldX, GameManager.Instance.PlayerGPS.WorldZ);
-            var distance = (playerPos - destinationWorldPos).magnitude;
-            // 3.5 units per second in-game (not realtime second) seems to approximate 1 unit of speed...
-            var seconds = distance / (3.5 * GameManager.Instance.SpeedChanger.GetBaseSpeed());
-
-/*            var travelTimeCalculator = new TravelTimeCalculator();
+            var travelTimeCalculator = new TravelTimeCalculator();
             var minutes = travelTimeCalculator.CalculateTravelTime(
                 MapsFile.GetPixelFromPixelID(locationSummary.ID),
-                false, false, false,
+                false, false, true,
                 GameManager.Instance.PlayerMotor.IsRiding,
                 GameManager.Instance.PlayerEntity.Items.Contains(
-                    ItemGroups.Transportation, (int)Transportation.Small_cart));*/
+                    ItemGroups.Transportation, (int)Transportation.Small_cart));
 
-            var travelDuration = "";
-            // if estimated time is less than 24 hours, show total hours.
-            // if it is more, show estimated time in days, assuming 16 hours of travel and 8 hours of rest per day.
-            /*            if (minutes < 1440) travelDuration = ((int)Math.Ceiling(minutes / 60f)).ToString() + " hours. other guess: " + ((int)Math.Ceiling(seconds / 3600)).ToString();
-                        else travelDuration = ((int)Math.Ceiling(minutes /960f)).ToString() + " days";*/
+            var days = Math.Ceiling((float)minutes) / 1440;
 
-            if (seconds < 86400) travelDuration = ((int)Math.Ceiling(seconds / 3600)).ToString() + " hours.";
-            else travelDuration = ((int)Math.Ceiling(seconds / 28800)).ToString() + " days";
+            var tripCost = travelTimeCalculator.CalculateTripCost(
+                minutes,
+                false,
+                DaggerfallWorkshop.Game.Banking.DaggerfallBankManager.OwnsShip || GameManager.Instance.GuildManager.FreeShipTravel(),
+                true);
 
-            DaggerfallMessageBox confirmTravelBox = new DaggerfallMessageBox(
+            DaggerfallMessageBox confirmShipTravelBox = new DaggerfallMessageBox(
                 uiManager,
                 DaggerfallMessageBox.CommonMessageBoxButtons.YesNo,
-                "Estimated travel time is " + travelDuration + ". Begin journey?",
+                "The journey by boat will take  " + days + " days and cost " + tripCost + " gold pieces. Begin journey?",
                 this);
 
-            confirmTravelBox.OnButtonClick += (_sender, button) =>
+                confirmShipTravelBox.OnButtonClick += (_sender, button) =>
+                {
+                    /*                    if (button == DaggerfallMessageBox.MessageBoxButtons.Yes)
+                                        {
+                                            uiManager.PopWindow();
+                                            InitTravel();
+                                        }
+                                        else
+                                        {
+                                            uiManager.PopWindow();
+                                        }*/
+                    uiManager.PopWindow();
+                };
+                confirmShipTravelBox.Show();
+
+
+
+        }
+
+        void CreateConfirmTravelWindow()
+        {
+
+            if (portsFilter &&
+                (GameManager.Instance.PlayerGPS.HasCurrentLocation &&
+                 GameManager.Instance.PlayerGPS.CurrentLocation.Exterior.ExteriorData.PortTownAndUnknown != 0))
             {
-                if (button == DaggerfallMessageBox.MessageBoxButtons.Yes)
+                // player wants to travel to a port town AND is currently in a port town. do fast travel by ship.
+                CreateShipTravelPopup();
+            }
+            else
+            {
+                var destinationRect = PlayerAutoPilot.GetLocationRect(locationSummary);
+                var destinationWorldPos = destinationRect.center;
+                var playerPos = new Vector2(GameManager.Instance.PlayerGPS.WorldX, GameManager.Instance.PlayerGPS.WorldZ);
+                var distance = (playerPos - destinationWorldPos).magnitude;
+                // 3.5 units per second in-game (not realtime second) seems to approximate 1 unit of speed...
+                var seconds = distance / (3.5 * GameManager.Instance.SpeedChanger.GetBaseSpeed());
+
+
+
+                var travelDuration = "";
+                // if estimated time is less than 24 hours, show total hours.
+                // if it is more, show estimated time in days, assuming 16 hours of travel and 8 hours of rest per day.
+                /*            if (minutes < 1440) travelDuration = ((int)Math.Ceiling(minutes / 60f)).ToString() + " hours. other guess: " + ((int)Math.Ceiling(seconds / 3600)).ToString();
+                            else travelDuration = ((int)Math.Ceiling(minutes /960f)).ToString() + " days";*/
+
+                if (seconds < 86400) travelDuration = ((int)Math.Ceiling(seconds / 3600)).ToString() + " hours.";
+                else travelDuration = ((int)Math.Ceiling(seconds / 28800)).ToString() + " days";
+
+                DaggerfallMessageBox confirmTravelBox = new DaggerfallMessageBox(
+                    uiManager,
+                    DaggerfallMessageBox.CommonMessageBoxButtons.YesNo,
+                    "Estimated travel time is " + travelDuration + ". Begin journey?",
+                    this);
+
+                confirmTravelBox.OnButtonClick += (_sender, button) =>
                 {
-                    uiManager.PopWindow();
-                    InitTravel();
-                }
-                else
-                {
-                    uiManager.PopWindow();
-                }
-            };
-            confirmTravelBox.Show();
+                    if (button == DaggerfallMessageBox.MessageBoxButtons.Yes)
+                    {
+                        uiManager.PopWindow();
+                        InitTravel();
+                    }
+                    else
+                    {
+                        uiManager.PopWindow();
+                    }
+                };
+                confirmTravelBox.Show();
+            }
         }
 
         void InitTravel()
@@ -1248,7 +1365,6 @@ namespace TediousTravel
             this.CloseWindow();
             controller.StartFastTravel(locationSummary);
         }
-
 
         #endregion
 
