@@ -29,16 +29,15 @@ namespace TediousTravel
 
         private void Start()
         {
+            TediousData.Instance.LoadPortTowns();
             DaggerfallUI.UIManager.OnWindowChange += travelMapInterceptor;
             travelMap = new TediousTravelMap(DaggerfallUI.UIManager, this);
             travelUi = new TediousTravelControllMenu(DaggerfallUI.UIManager, travelMap);
             travelUi.OnCancel += (sender) => {
                 destinationName = "";
-                Debug.Log("travelUi canceled");
             };
             travelUi.OnClose += () => {
                 InterruptFastTravel();
-                Debug.Log("travelUi closed");
             };
 
             travelUi.OnTimeCompressionChanged += (newTimeCompression) => { Time.timeScale = newTimeCompression; };
@@ -52,7 +51,8 @@ namespace TediousTravel
         {
             var manager = (UserInterfaceManager)sender;
             var window = manager.TopWindow;
-            if (!travelMap.IsShowing && window.GetType() == typeof(DaggerfallTravelMapWindow))
+            Debug.Log("top window: " + window);
+            if (window != null && !travelMap.IsShowing && window.GetType() == typeof(DaggerfallTravelMapWindow))
             {
 
                 DaggerfallTravelMapWindow originalTravelMap = window as DaggerfallTravelMapWindow;
@@ -108,8 +108,7 @@ namespace TediousTravel
                 if (GameManager.Instance.AreEnemiesNearby())
                 {
                     travelUi.CloseWindow();
-                    Debug.Log("fast travel interrupted by enemies");
-                    DaggerfallUI.Instance.DaggerfallHUD.SetMidScreenText("There are enemies nearby");
+                    DaggerfallUI.Instance.DaggerfallHUD.SetMidScreenText("There are enemies nearby", 30);
                     return;
                 }
                     

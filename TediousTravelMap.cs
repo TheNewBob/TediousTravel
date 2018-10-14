@@ -32,6 +32,18 @@ namespace TediousTravel
     /// </summary>
     public class TediousTravelMap : DaggerfallPopupWindow
     {
+        private class ShipTravelDestination
+        {
+            public int minutes;
+            public DFPosition position;
+
+            public ShipTravelDestination(int minutes, DFPosition destination)
+            {
+                this.minutes = minutes;
+                this.position = destination;
+            }
+        }
+
         #region Fields
 
         FilterMode filterMode = FilterMode.Point;
@@ -54,6 +66,8 @@ namespace TediousTravel
         const float identifyFlashInterval = 0.5f;
 
         bool portsFilter = false;
+        ShipTravelDestination shipTravelDestination = null;
+        TediousData tediousData = TediousData.Instance;
 
         Dictionary<string, Vector2> offsetLookup = new Dictionary<string, Vector2>();
         string[] selectedRegionMapNames;    //different maps for selected region
@@ -292,6 +306,14 @@ namespace TediousTravel
         public override void Update()
         {
             base.Update();
+
+            if (shipTravelDestination != null)
+            {
+                DaggerfallUI.Instance.FadeBehaviour.SmashHUDToBlack();
+                performShipTravel(shipTravelDestination);
+                shipTravelDestination = null;
+                return;
+            }
 
             // Toggle window closed with same hotkey used to open it
             if (Input.GetKeyUp(toggleClosedBinding))
@@ -880,11 +902,11 @@ namespace TediousTravel
             {
                 portsFilter = true;
                 dungeonsFilterButton.Enabled = false;
-                filterDungeons = true;
+                filterDungeons = false;
                 townsFilterButton.Enabled = false;
                 filterTowns = false;
                 templesFilterButton.Enabled = false;
-                filterTemples = true;
+                filterTemples = false;
                 homesFilterButton.Enabled = false;
                 filterHomes = false;
             }
@@ -1056,8 +1078,8 @@ namespace TediousTravel
                                 if (index == -1)
                                     continue;
 
-                                /*else if (portsFilter && (index != 13 || index != 11) && !isPortTown(summary))
-                                    continue;*/
+                                else if (portsFilter && !tediousData.IsPortTown(summary.RegionIndex, summary.MapIndex))
+                                    continue;
 
                                 else
                                     pixelBuffer[offset] = locationPixelColors[index];
@@ -1071,24 +1093,6 @@ namespace TediousTravel
             {
                 Debug.LogError(string.Format("{0}\n{1}", ex.TargetSite, ex.Message));
             }
-        }
-
-        /// <summary>
-        /// Returns true if the passed mapsummary is a port town, false otherwise
-        /// </summary>
-        /// <param name="summary"></param>
-        /// <returns></returns>
-        bool isPortTown(ContentReader.MapSummary summary)
-        {
-            DFLocation targetLocation;
-            if (DaggerfallUnity.Instance.ContentReader.GetLocation(
-                    summary.RegionIndex, summary.MapIndex, out targetLocation))
-            {
-                if (targetLocation.Exterior.ExteriorData.PortTownAndUnknown != 0)
-                    return true;
-            }
-            Debug.Log(summary.LocationType.ToString() + " is not a port town");
-            return false;
         }
 
         Vector2 GetCoordinates()
@@ -1174,6 +1178,9 @@ namespace TediousTravel
 
                     // only make location selectable if it is already discovered
                     if (!checkLocationDiscovered(locationSummary))
+                        return;
+
+                    if (portsFilter && !tediousData.IsPortTown(locationSummary.RegionIndex, locationSummary.MapIndex))
                         return;
 
                     locationSelected = true;
@@ -1265,47 +1272,79 @@ namespace TediousTravel
                 townsFilterButton.BackgroundTexture = townsFilterButtonDisabled;
         }
 
+        /**
+         * A popup window informing the player that there is no regular shipping to or from a chosen port.
+         */ 
+        void CreateNoShipAvailablePopup(bool noLeavingShip = true)
+        {
+            var message = "";
+            if (noLeavingShip)
+                message = "There is no regular shipping at this port.\nIf yonly you had your own boat...";
+            else
+                message = "No ships are sailing for this port.\n If you had your own, it would be another matter...";
+
+            DaggerfallMessageBox noShipAvailableMessageBox = new DaggerfallMessageBox(
+                    uiManager,
+                    DaggerfallMessageBox.CommonMessageBoxButtons.Nothing,
+                    message,
+                    this);
+            noShipAvailableMessageBox.ClickAnywhereToClose = true;
+            noShipAvailableMessageBox.Show();
+        }
+
         void CreateShipTravelPopup()
         {
             var travelTimeCalculator = new TravelTimeCalculator();
-            var minutes = travelTimeCalculator.CalculateTravelTime(
-                MapsFile.GetPixelFromPixelID(locationSummary.ID),
+            var destinationPosition = MapsFile.GetPixelFromPixelID(locationSummary.ID);
+            int minutes = travelTimeCalculator.CalculateTravelTime(
+                destinationPosition,
                 false, false, true,
                 GameManager.Instance.PlayerMotor.IsRiding,
                 GameManager.Instance.PlayerEntity.Items.Contains(
                     ItemGroups.Transportation, (int)Transportation.Small_cart));
 
-            var days = Math.Ceiling((float)minutes) / 1440;
+            if (!PlayerOwnsShip())
+            {
+                minutes = (int)Math.Round((float)minutes * GetLocationTraveltimeModifier(
+                    GameManager.Instance.PlayerGPS.CurrentLocationType,
+                    locationSummary.LocationType));
+            }
 
-            var tripCost = travelTimeCalculator.CalculateTripCost(
-                minutes,
-                false,
-                DaggerfallWorkshop.Game.Banking.DaggerfallBankManager.OwnsShip || GameManager.Instance.GuildManager.FreeShipTravel(),
-                true);
+            var days = (int)Math.Ceiling((float)minutes / 1440);
 
-            DaggerfallMessageBox confirmShipTravelBox = new DaggerfallMessageBox(
-                uiManager,
-                DaggerfallMessageBox.CommonMessageBoxButtons.YesNo,
-                "The journey by boat will take  " + days + " days and cost " + tripCost + " gold pieces. Begin journey?",
-                this);
+            var tripCost = 0;
+            if (!PlayerOwnsShip() && !GameManager.Instance.GuildManager.FreeShipTravel())
+            {
+                tripCost = days * 15;
+            }
+
+            if (GameManager.Instance.PlayerEntity.GoldPieces < tripCost)
+            {
+                DaggerfallMessageBox noMoneyMessageBox = new DaggerfallMessageBox(
+                    uiManager,
+                    DaggerfallMessageBox.CommonMessageBoxButtons.Nothing,
+                    "Unfortunately you do not have the " + tripCost + " gold pieces required for the " + days + " days journey");
+                noMoneyMessageBox.ClickAnywhereToClose = true;
+                noMoneyMessageBox.Show();
+            }
+            else
+            {
+                DaggerfallMessageBox confirmShipTravelBox = new DaggerfallMessageBox(
+                    uiManager,
+                    DaggerfallMessageBox.CommonMessageBoxButtons.YesNo,
+                    "The journey by boat will take  " + days + " days and cost " + tripCost + " gold pieces. Begin journey?",
+                    this);
 
                 confirmShipTravelBox.OnButtonClick += (_sender, button) =>
                 {
-                    /*                    if (button == DaggerfallMessageBox.MessageBoxButtons.Yes)
-                                        {
-                                            uiManager.PopWindow();
-                                            InitTravel();
-                                        }
-                                        else
-                                        {
-                                            uiManager.PopWindow();
-                                        }*/
+                    if (button == DaggerfallMessageBox.MessageBoxButtons.Yes)
+                    {
+                        shipTravelDestination = new ShipTravelDestination(minutes, destinationPosition);
+                    }
                     uiManager.PopWindow();
                 };
                 confirmShipTravelBox.Show();
-
-
-
+            }
         }
 
         void CreateConfirmTravelWindow()
@@ -1316,7 +1355,26 @@ namespace TediousTravel
                  GameManager.Instance.PlayerGPS.CurrentLocation.Exterior.ExteriorData.PortTownAndUnknown != 0))
             {
                 // player wants to travel to a port town AND is currently in a port town. do fast travel by ship.
-                CreateShipTravelPopup();
+                if (!PlayerOwnsShip())
+                {
+
+                    if (!MayHaveActivePort(GameManager.Instance.PlayerGPS.CurrentLocation.MapTableData.LocationType))
+                    {
+                        CreateNoShipAvailablePopup(true);
+                    }
+                    else if (!MayHaveActivePort(locationSummary.LocationType))
+                    {
+                        CreateNoShipAvailablePopup(false);
+                    }
+                    else
+                    {
+                        CreateShipTravelPopup();
+                    }
+                }
+                else
+                {
+                    CreateShipTravelPopup();
+                }
             }
             else
             {
@@ -1331,10 +1389,7 @@ namespace TediousTravel
 
                 var travelDuration = "";
                 // if estimated time is less than 24 hours, show total hours.
-                // if it is more, show estimated time in days, assuming 16 hours of travel and 8 hours of rest per day.
-                /*            if (minutes < 1440) travelDuration = ((int)Math.Ceiling(minutes / 60f)).ToString() + " hours. other guess: " + ((int)Math.Ceiling(seconds / 3600)).ToString();
-                            else travelDuration = ((int)Math.Ceiling(minutes /960f)).ToString() + " days";*/
-
+                // if it is more, show estimated time in days, assuming 8 hours of travel and 16 hours of rest per day.
                 if (seconds < 86400) travelDuration = ((int)Math.Ceiling(seconds / 3600)).ToString() + " hours.";
                 else travelDuration = ((int)Math.Ceiling(seconds / 28800)).ToString() + " days";
 
@@ -1365,6 +1420,98 @@ namespace TediousTravel
             this.CloseWindow();
             controller.StartFastTravel(locationSummary);
         }
+
+        private void performShipTravel(ShipTravelDestination destination)
+        {
+            GameManager.Instance.StreamingWorld.TeleportToCoordinates(
+                destination.position.X, destination.position.Y, StreamingWorld.RepositionMethods.RandomStartMarker);
+
+            GameManager.Instance.PlayerEntity.CurrentHealth = GameManager.Instance.PlayerEntity.MaxHealth;
+            GameManager.Instance.PlayerEntity.CurrentFatigue = GameManager.Instance.PlayerEntity.MaxFatigue;
+            GameManager.Instance.PlayerEntity.CurrentMagicka = GameManager.Instance.PlayerEntity.MaxMagicka;
+
+            DaggerfallUnity.WorldTime.DaggerfallDateTime.RaiseTime(destination.minutes * 60);
+
+            // Halt random enemy spawns for next playerEntity update so player isn't bombarded by spawned enemies at the end of a long trip
+            GameManager.Instance.PlayerEntity.PreventEnemySpawns = true;
+
+            // Raise arrival time to just after 7am 
+            if ((DaggerfallUnity.WorldTime.DaggerfallDateTime.Hour < 7)
+                || ((DaggerfallUnity.WorldTime.DaggerfallDateTime.Hour == 7) && (DaggerfallUnity.WorldTime.DaggerfallDateTime.Minute < 10)))
+            {
+                float raiseTime = (((7 - DaggerfallUnity.WorldTime.DaggerfallDateTime.Hour) * 3600)
+                                    + ((10 - DaggerfallUnity.WorldTime.DaggerfallDateTime.Minute) * 60)
+                                    - DaggerfallUnity.WorldTime.DaggerfallDateTime.Second);
+                DaggerfallUnity.WorldTime.DaggerfallDateTime.RaiseTime(raiseTime);
+            }
+            else if (DaggerfallUnity.WorldTime.DaggerfallDateTime.Hour > 17)
+            {
+                float raiseTime = (((31 - DaggerfallUnity.WorldTime.DaggerfallDateTime.Hour) * 3600)
+                + ((10 - DaggerfallUnity.WorldTime.DaggerfallDateTime.Minute) * 60)
+                - DaggerfallUnity.WorldTime.DaggerfallDateTime.Second);
+                DaggerfallUnity.WorldTime.DaggerfallDateTime.RaiseTime(raiseTime);
+            }
+
+            CloseWindow();
+            GameManager.Instance.PlayerEntity.RaiseSkills();
+            DaggerfallUI.Instance.FadeBehaviour.FadeHUDFromBlack();
+        }
+
+        /**
+         * Returns true if it is possible that this location type has an active port.
+         * Note that false doesn't mean that it cannot have a port, merely that if it has one, that port is not active.
+         */ 
+        bool MayHaveActivePort(DFRegion.LocationTypes locationType)
+        {
+            if (locationType == DFRegion.LocationTypes.ReligionTemple ||
+                locationType == DFRegion.LocationTypes.Tavern ||
+                locationType == DFRegion.LocationTypes.TownCity ||
+                locationType == DFRegion.LocationTypes.TownHamlet ||
+                locationType == DFRegion.LocationTypes.TownVillage ||
+                locationType == DFRegion.LocationTypes.HomeWealthy)
+                return true;
+
+            return false;
+        }
+
+        /// <summary>
+        /// Returns a modifier on travel time based on the quality of starting or arrival port.
+        /// The reasoning here is that traveling between two major ports will be fast, because a lot of ships
+        /// are sailing that route directly. Meanwhile, to sail from or to some forgotten fishing hamlet
+        /// will necessarily include waiting for ships to leave and jumping ship once or twice because nobody
+        /// is serving the route directly or regularly.
+        /// </summary>
+        /// <param name="startLocation"></param>
+        /// <param name="endLocation"></param>
+        /// <returns></returns>
+        float GetLocationTraveltimeModifier(DFRegion.LocationTypes startLocation, DFRegion.LocationTypes endLocation)
+        {
+            var modifier = 1f;
+
+            if (startLocation == DFRegion.LocationTypes.Tavern ||
+                endLocation == DFRegion.LocationTypes.Tavern)
+                modifier += 0.1f;
+
+            if (startLocation == DFRegion.LocationTypes.TownVillage ||
+                endLocation == DFRegion.LocationTypes.TownVillage ||
+                startLocation == DFRegion.LocationTypes.ReligionTemple ||
+                endLocation == DFRegion.LocationTypes.ReligionTemple)
+                modifier += 0.2f;
+
+            if (startLocation == DFRegion.LocationTypes.TownHamlet ||
+                endLocation == DFRegion.LocationTypes.TownHamlet ||
+                startLocation == DFRegion.LocationTypes.HomeWealthy ||
+                endLocation == DFRegion.LocationTypes.HomeWealthy)
+                modifier += 0.3f;
+
+            return modifier;
+        }
+
+        bool PlayerOwnsShip()
+        {
+            return DaggerfallWorkshop.Game.Banking.DaggerfallBankManager.OwnsShip;
+        }
+
 
         #endregion
 

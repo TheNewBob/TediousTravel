@@ -1,6 +1,6 @@
 {
     "ModTitle": "TediousTravel",
-    "ModVersion": "0.1.2",
+    "ModVersion": "0.2.0-SNAPSHOT",
     "ModAuthor": "Jedidia",
     "ContactInfo": "",
     "DFUnity_Version": "0.5.505",
@@ -11,6 +11,7 @@
         "Assets/Untracked/TediousTravel/TediousTravelControllMenu.cs",
         "Assets/Untracked/TediousTravel/TediousTravelMap.cs",
         "Assets/Untracked/TediousTravel/PlayerAutoPilot.cs",
-        "Assets/Untracked/TediousTravel/tedioustravel.dfmod.json"
+        "Assets/Untracked/TediousTravel/tedioustravel.dfmod.json",
+        "Assets/Untracked/TediousTravel/TediousData.cs"
     ]
 }

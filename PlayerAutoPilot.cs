@@ -48,10 +48,6 @@ namespace TediousTravel
             destinationWorldRect.xMax += 1000;
             destinationWorldRect.yMin -= 1000;
             destinationWorldRect.yMax += 1000;
-
-            Debug.Log("destination rect: left:"
-                + (int)destinationWorldRect.xMin + " right: " + (int)destinationWorldRect.xMax
-                + " bottom: " + (int)destinationWorldRect.yMin + " top: " + (int)destinationWorldRect.yMax);
         }
 
         public void Update()
@@ -70,7 +66,6 @@ namespace TediousTravel
             var playerPos = GameManager.Instance.PlayerGPS.CurrentMapPixel;
             if (playerPos.X != lastPlayerMapPixel.X || playerPos.Y != lastPlayerMapPixel.Y)
             {
-                Debug.Log("Player entered new map pixel, reorienting");
                 lastPlayerMapPixel = playerPos;
                 OrientPlayer();
 
