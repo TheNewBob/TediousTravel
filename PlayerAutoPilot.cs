@@ -24,6 +24,7 @@ namespace TediousTravel
         private bool allowSetYaw = false;
         private bool inDestinationMapPixel = false;
         private InputManager inputManager = InputManager.Instance;
+        private Transform cameraTransform;
 
 
         // some reflection-fu to get access to a private function. Don't judge me, if there was another way I'd use it.
@@ -38,6 +39,7 @@ namespace TediousTravel
 
         private void Init()
         {
+            cameraTransform = GameManager.Instance.MainCamera.GetComponent<Transform>();
             destinationMapPixel = MapsFile.GetPixelFromPixelID(destinationSummary.ID);
             Debug.Log("destination map pixel: " + destinationMapPixel.X + ", " + destinationMapPixel.Y);
 
@@ -52,6 +54,11 @@ namespace TediousTravel
 
         public void Update()
         {
+            // prevent camera from 'dozing off' during fast travel
+            var rot = cameraTransform.rotation;
+            rot.x = 0f;
+            cameraTransform.rotation = rot;
+
             if (inDestinationMapPixel)
             {
                 if (isPlayerInArrivalRect())
@@ -110,9 +117,12 @@ namespace TediousTravel
                     (int)destinationWorldRect.center.x,
                     (int)destinationWorldRect.center.y));
 
-            GameManager.Instance.PlayerMouseLook.Yaw = yaw;
-            GameManager.Instance.PlayerMouseLook.Pitch = 0f;
-            allowSetYaw = true;
+            if (Math.Abs(GameManager.Instance.PlayerMouseLook.Yaw - yaw) > 0.01)
+            {
+                GameManager.Instance.PlayerMouseLook.Yaw = yaw;
+                GameManager.Instance.PlayerMouseLook.Pitch = 0f;
+                allowSetYaw = true;
+            }
         }
 
 
