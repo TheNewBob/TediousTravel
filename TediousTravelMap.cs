@@ -32,15 +32,17 @@ namespace TediousTravel
     /// </summary>
     public class TediousTravelMap : DaggerfallPopupWindow
     {
-        private class ShipTravelDestination
+        private class ShipTravelData
         {
             public int minutes;
-            public DFPosition position;
+            public DFPosition destination;
+            public int cost;
 
-            public ShipTravelDestination(int minutes, DFPosition destination)
+            public ShipTravelData(int minutes, DFPosition destination, int cost)
             {
                 this.minutes = minutes;
-                this.position = destination;
+                this.destination = destination;
+                this.cost = cost;
             }
         }
 
@@ -66,7 +68,7 @@ namespace TediousTravel
         const float identifyFlashInterval = 0.5f;
 
         bool portsFilter = false;
-        ShipTravelDestination shipTravelDestination = null;
+        ShipTravelData shipTravelDestination = null;
         TediousData tediousData = TediousData.Instance;
 
         Dictionary<string, Vector2> offsetLookup = new Dictionary<string, Vector2>();
@@ -1339,7 +1341,7 @@ namespace TediousTravel
                 {
                     if (button == DaggerfallMessageBox.MessageBoxButtons.Yes)
                     {
-                        shipTravelDestination = new ShipTravelDestination(minutes, destinationPosition);
+                        shipTravelDestination = new ShipTravelData(minutes, destinationPosition, tripCost);
                     }
                     uiManager.PopWindow();
                 };
@@ -1421,14 +1423,15 @@ namespace TediousTravel
             controller.StartFastTravel(locationSummary);
         }
 
-        private void performShipTravel(ShipTravelDestination destination)
+        private void performShipTravel(ShipTravelData destination)
         {
             GameManager.Instance.StreamingWorld.TeleportToCoordinates(
-                destination.position.X, destination.position.Y, StreamingWorld.RepositionMethods.RandomStartMarker);
+                destination.destination.X, destination.destination.Y, StreamingWorld.RepositionMethods.RandomStartMarker);
 
             GameManager.Instance.PlayerEntity.CurrentHealth = GameManager.Instance.PlayerEntity.MaxHealth;
             GameManager.Instance.PlayerEntity.CurrentFatigue = GameManager.Instance.PlayerEntity.MaxFatigue;
             GameManager.Instance.PlayerEntity.CurrentMagicka = GameManager.Instance.PlayerEntity.MaxMagicka;
+            GameManager.Instance.PlayerEntity.GoldPieces -= shipTravelDestination.cost;
 
             DaggerfallUnity.WorldTime.DaggerfallDateTime.RaiseTime(destination.minutes * 60);
 
