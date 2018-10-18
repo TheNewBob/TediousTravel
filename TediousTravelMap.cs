@@ -1354,7 +1354,9 @@ namespace TediousTravel
 
             if (portsFilter &&
                 (GameManager.Instance.PlayerGPS.HasCurrentLocation &&
-                 GameManager.Instance.PlayerGPS.CurrentLocation.Exterior.ExteriorData.PortTownAndUnknown != 0))
+                 TediousData.Instance.IsPortTown(
+                     GameManager.Instance.PlayerGPS.CurrentLocation.RegionIndex,
+                     GameManager.Instance.PlayerGPS.CurrentLocation.LocationIndex)))
             {
                 // player wants to travel to a port town AND is currently in a port town. do fast travel by ship.
                 if (!PlayerOwnsShip())

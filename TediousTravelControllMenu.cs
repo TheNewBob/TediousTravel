@@ -154,7 +154,7 @@ namespace TediousTravel
         {
             base.Draw();
             DaggerfallUI.Instance.DaggerfallHUD.HUDVitals.Draw();
-//            DaggerfallUI.Instance.DaggerfallHUD.HUDCompass.Draw();
+            DaggerfallUI.Instance.DaggerfallHUD.HUDCompass.Draw();
             DaggerfallUI.Instance.DaggerfallHUD.ShowMidScreenText = true;
         }
 

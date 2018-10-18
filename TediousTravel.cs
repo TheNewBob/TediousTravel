@@ -108,7 +108,13 @@ namespace TediousTravel
                 if (GameManager.Instance.AreEnemiesNearby())
                 {
                     travelUi.CloseWindow();
-                    DaggerfallUI.Instance.DaggerfallHUD.SetMidScreenText("There are enemies nearby", 30);
+                    var enemiesNearbyMessageBox = new DaggerfallMessageBox(
+                        DaggerfallUI.UIManager,
+                        DaggerfallMessageBox.CommonMessageBoxButtons.Nothing,
+                        "Somebody is seeking to put a premature end to your journey...");
+                    enemiesNearbyMessageBox.ClickAnywhereToClose = true;
+                    enemiesNearbyMessageBox.ScreenDimColor = Color.clear;
+                    DaggerfallUI.Instance.UserInterfaceManager.PushWindow(enemiesNearbyMessageBox);
                     return;
                 }
                     

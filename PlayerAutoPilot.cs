@@ -20,11 +20,12 @@ namespace TediousTravel
         private Rect destinationWorldRect;
         private PlayerGPS playerGPS = GameManager.Instance.PlayerGPS;
         private DFPosition lastPlayerMapPixel = new DFPosition(int.MaxValue, int.MaxValue);
-        // used to allow mouselock in the next frame, without which yaw changes will not be updated.
-        private bool allowSetYaw = false;
         private bool inDestinationMapPixel = false;
         private InputManager inputManager = InputManager.Instance;
-        private Transform cameraTransform;
+        private Transform cameraTransform = GameManager.Instance.PlayerMouseLook.GetComponent<Transform>();
+        private PlayerMouseLook mouseLook = GameManager.Instance.PlayerMouseLook;
+        private Vector3 pitchVector = new Vector3(0, 0, 0);
+        private Vector3 yawVector = new Vector3(0, 0, 0);
 
 
         // some reflection-fu to get access to a private function. Don't judge me, if there was another way I'd use it.
@@ -39,9 +40,7 @@ namespace TediousTravel
 
         private void Init()
         {
-            cameraTransform = GameManager.Instance.MainCamera.GetComponent<Transform>();
             destinationMapPixel = MapsFile.GetPixelFromPixelID(destinationSummary.ID);
-            Debug.Log("destination map pixel: " + destinationMapPixel.X + ", " + destinationMapPixel.Y);
 
             // get exact coordinates of destination
             destinationWorldRect = GetLocationRect(destinationSummary);
@@ -54,11 +53,6 @@ namespace TediousTravel
 
         public void Update()
         {
-            // prevent camera from 'dozing off' during fast travel
-            var rot = cameraTransform.rotation;
-            rot.x = 0f;
-            cameraTransform.rotation = rot;
-
             if (inDestinationMapPixel)
             {
                 if (isPlayerInArrivalRect())
@@ -74,23 +68,16 @@ namespace TediousTravel
             if (playerPos.X != lastPlayerMapPixel.X || playerPos.Y != lastPlayerMapPixel.Y)
             {
                 lastPlayerMapPixel = playerPos;
-                OrientPlayer();
+                SetNewYaw();
 
                 inDestinationMapPixel = lastPlayerMapPixel.X == destinationMapPixel.X && lastPlayerMapPixel.Y == destinationMapPixel.Y;
             }
 
-            // disable player mouselook, except if new yaw was set.
-            if (allowSetYaw)
-            {
-                GameManager.Instance.PlayerMouseLook.enableMouseLook = true;
-                GameManager.Instance.PlayerMouseLook.lockCursor = true;
-                allowSetYaw = false;
-            }
-            else
-            {
-                GameManager.Instance.PlayerMouseLook.simpleCursorLock = true;
-                GameManager.Instance.PlayerMouseLook.enableMouseLook = false;
-            }
+            SetPlayerOrientation();
+
+            // keep mouselook shut off
+            mouseLook.simpleCursorLock = true;
+            mouseLook.enableMouseLook = false;
             // make the player move forward
             applyHorizontalForce.Invoke(inputManager, new object[] { 1 });
 
@@ -109,20 +96,19 @@ namespace TediousTravel
 
  
 
-        private void OrientPlayer()
+        private void SetNewYaw()
         {
             var playerPos = new DFPosition(playerGPS.WorldX, playerGPS.WorldZ);
-            var yaw = CalculateYaw(playerPos,
+            yawVector.y = CalculateYaw(playerPos,
                 new DFPosition(
                     (int)destinationWorldRect.center.x,
                     (int)destinationWorldRect.center.y));
+        }
 
-            if (Math.Abs(GameManager.Instance.PlayerMouseLook.Yaw - yaw) > 0.01)
-            {
-                GameManager.Instance.PlayerMouseLook.Yaw = yaw;
-                GameManager.Instance.PlayerMouseLook.Pitch = 0f;
-                allowSetYaw = true;
-            }
+        private void SetPlayerOrientation()
+        {
+            cameraTransform.localEulerAngles = pitchVector;
+            mouseLook.characterBody.transform.localEulerAngles = yawVector;
         }
 
 
@@ -141,50 +127,16 @@ namespace TediousTravel
             if (!DaggerfallUnity.Instance.ContentReader.GetLocation(
                     mapSummary.RegionIndex, mapSummary.MapIndex, out targetLocation))
                 throw new ArgumentException("TediousTravel destination not found!");
-            return GetLocationRect(targetLocation);
+            return DaggerfallLocation.GetLocationRect(targetLocation);
         }
-
-        // TODO: Will be a member of DaggerfallLocation in a future build, remove when released.
-        /// <summary>
-        /// Helper to get location rect in world coordinates.
-        /// </summary>
-        /// <param name="location">Target location.</param>
-        /// <returns>Location rect in world space. xMin,yMin is SW corner. xMax,yMax is NE corner.</returns>
-        public static Rect GetLocationRect(DFLocation location)
-        {
-            // This finds the absolute SW origin of map pixel in world coords
-            DFPosition mapPixel = MapsFile.LongitudeLatitudeToMapPixel(location.MapTableData.Longitude, location.MapTableData.Latitude);
-            DFPosition worldOrigin = MapsFile.MapPixelToWorldCoord(mapPixel.X, mapPixel.Y);
-
-            // Find tile offset point using same logic as terrain helper
-            DFPosition tileOrigin = TerrainHelper.GetLocationTerrainTileOrigin(location);
-
-            // Adjust world origin by tileorigin*2 in world units
-            worldOrigin.X += (tileOrigin.X * 2) * MapsFile.WorldMapTileDim;
-            worldOrigin.Y += (tileOrigin.Y * 2) * MapsFile.WorldMapTileDim;
-
-            // Get width and height of location in world units
-            int width = location.Exterior.ExteriorData.Width * MapsFile.WorldMapRMBDim;
-            int height = location.Exterior.ExteriorData.Height * MapsFile.WorldMapRMBDim;
-
-            // Create location rect in world coordinates
-            Rect locationRect = new Rect()
-            {
-                xMin = worldOrigin.X,
-                xMax = worldOrigin.X + width,
-                yMin = worldOrigin.Y,
-                yMax = worldOrigin.Y + height,
-            };
-
-            return locationRect;
-        }
-
 
         // events
         public delegate void OnArrivalHandler();
         public event OnArrivalHandler OnArrival;
         void RaiseOnArrivalEvent()
         {
+            // set the player up so he's facing the destination.
+            mouseLook.Yaw = yawVector.y;
             if (OnArrival != null)
                 OnArrival();
         }

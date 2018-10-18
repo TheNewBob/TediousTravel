@@ -14,8 +14,11 @@ namespace TediousTravel
         private const string DATA_PATH = "Assets/StreamingAssets/Mods/TediousData/";
         private const string PORTTOWNS_FILE = "porttowns.xml";
 
-        // Apparently necessary because dictionaries aren't serializable, although they would be a perfect fit for json. Jackson FTW!
-        //[Serializable]
+        // list of additional port towns
+        private List<KeyValuePair<string, string>> additionalPorts =
+            new List<KeyValuePair<string, string>> { new KeyValuePair<string, string>("Isle of Balfiera", "Blackhead") };
+
+        //Would have prefered json to xml, but apparently JsonUtility is pretty much useless in Unity 2018.
         public class PortTown : object
         {
             public int locationIdx = -1;
@@ -94,11 +97,27 @@ namespace TediousTravel
                 Debug.Log("ports in region " + region.Name + ": " + regionPorts);
             }
 
+            AddAditionalPortTowns(portTowns);
             Debug.Log("number of port towns: " + portTowns.locations.Count);
             var serializer = new XmlSerializer(typeof(PortTowns));
             var stream = new FileStream(DATA_PATH + PORTTOWNS_FILE, FileMode.CreateNew);
             serializer.Serialize(stream, portTowns);
             stream.Close();
+        }
+
+        /**
+         * Adds additional port towns to the list.
+         * These are only port towns in the context of TediousTravel, Daggerfall knows nothing about them.
+         */
+        private void AddAditionalPortTowns(PortTowns portTowns)
+        {
+            var reader = DaggerfallUnity.Instance.ContentReader.MapFileReader;
+            foreach (KeyValuePair<string, string> i in additionalPorts)
+            {
+                var location = reader.GetLocation(i.Key, i.Value);
+                Debug.Log("Adding " + location.RegionName + ", " + location.Name + " as additional port town: " + location.RegionIndex + ", " + location.LocationIndex);
+                portTowns.locations.Add(new PortTown(location.RegionIndex, location.LocationIndex));
+            }
         }
 
         public void LoadPortTowns()
