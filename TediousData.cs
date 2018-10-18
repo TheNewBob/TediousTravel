@@ -11,7 +11,7 @@ namespace TediousTravel
 {
     public class TediousData
     {
-        private const string DATA_PATH = "Assets/StreamingAssets/Mods/TediousData/";
+        private const string DATA_PATH = "/StreamingAssets/Mods/TediousData/";
         private const string PORTTOWNS_FILE = "porttowns.xml";
 
         // list of additional port towns
@@ -67,9 +67,9 @@ namespace TediousTravel
          */
         public void GeneratePortTownData()
         {
-            if (!File.Exists(DATA_PATH))
+            if (!File.Exists(Application.dataPath + DATA_PATH))
             {
-                System.IO.Directory.CreateDirectory(DATA_PATH);
+                System.IO.Directory.CreateDirectory(Application.dataPath + DATA_PATH);
             }
             DaggerfallUI.Instance.DaggerfallHUD.SetMidScreenText("Tedious data export complete. This won't be necessary in the future...");
 
@@ -100,7 +100,7 @@ namespace TediousTravel
             AddAditionalPortTowns(portTowns);
             Debug.Log("number of port towns: " + portTowns.locations.Count);
             var serializer = new XmlSerializer(typeof(PortTowns));
-            var stream = new FileStream(DATA_PATH + PORTTOWNS_FILE, FileMode.CreateNew);
+            var stream = new FileStream(Application.dataPath + DATA_PATH + PORTTOWNS_FILE, FileMode.CreateNew);
             serializer.Serialize(stream, portTowns);
             stream.Close();
         }
@@ -122,13 +122,13 @@ namespace TediousTravel
 
         public void LoadPortTowns()
         {
-            if (!File.Exists(DATA_PATH + PORTTOWNS_FILE))
+            if (!File.Exists(Application.dataPath + DATA_PATH + PORTTOWNS_FILE))
             {
                 GeneratePortTownData();
             }
 
             var deserializer = new XmlSerializer(typeof(PortTowns));
-            var file = new FileStream(DATA_PATH + PORTTOWNS_FILE, FileMode.Open);
+            var file = new FileStream(Application.dataPath + DATA_PATH + PORTTOWNS_FILE, FileMode.Open);
             var loadedData = deserializer.Deserialize(file) as PortTowns;
             file.Close();
 
