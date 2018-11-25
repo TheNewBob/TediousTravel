@@ -189,16 +189,19 @@ namespace TediousTravel
 
         private void FasterButton_OnMouseClick(BaseScreenComponent sender, Vector2 position)
         {
-            if (timeCompressionSetting == 1)
-                timeCompressionSetting = 5;
-            else timeCompressionSetting += 5;
+            if (timeCompressionSetting < 5)
+                timeCompressionSetting += 1;
+            else timeCompressionSetting = Math.Max(25, timeCompressionSetting + 5);
             timeCompressionTextbox.Text = timeCompressionSetting.ToString() + "x";
             RaiseOnTimeCompressionChangedEvent(timeCompressionSetting);
         }
 
         private void SlowerButton_OnMouseClick(BaseScreenComponent sender, Vector2 position)
         {
-            timeCompressionSetting = Mathf.Max(1, timeCompressionSetting - 5);
+            if (timeCompressionSetting <= 5)
+                timeCompressionSetting = Math.Max(1, timeCompressionSetting - 1);
+            else
+                timeCompressionSetting = Mathf.Max(1, timeCompressionSetting - 5);
             timeCompressionTextbox.Text = timeCompressionSetting.ToString() + "x";
             RaiseOnTimeCompressionChangedEvent(timeCompressionSetting);
         }
