@@ -1300,10 +1300,7 @@ namespace TediousTravel
             var destinationPosition = MapsFile.GetPixelFromPixelID(locationSummary.ID);
             int minutes = travelTimeCalculator.CalculateTravelTime(
                 destinationPosition,
-                false, false, true,
-                GameManager.Instance.PlayerMotor.IsRiding,
-                GameManager.Instance.PlayerEntity.Items.Contains(
-                    ItemGroups.Transportation, (int)Transportation.Small_cart));
+                false, false, true, false, false);
 
             if (!PlayerOwnsShip())
             {
