@@ -61,6 +61,16 @@ namespace TediousTravel
                     System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
                 if ((bool)isTeleportation.GetValue(originalTravelMap)) return;
 
+                // check if the travel map received a goto order from the journal link and replicate if yes
+                var gotoLocation = (string)originalTravelMap.GetType().GetField("gotoLocation",
+                    System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).GetValue(originalTravelMap);
+                if (gotoLocation != null)
+                {
+                    var gotoRegion = (int)originalTravelMap.GetType().GetField("gotoRegion",
+                        System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).GetValue(originalTravelMap);
+                    travelMap.GotoLocation(gotoLocation, gotoRegion);
+                }
+
                 originalTravelMap.CloseWindow();
 
                 // if a destination was picked, ask whether to resume or open map

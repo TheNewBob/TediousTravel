@@ -16,7 +16,10 @@ namespace TediousTravel
 
         // list of additional port towns
         private List<KeyValuePair<string, string>> additionalPorts =
-            new List<KeyValuePair<string, string>> { new KeyValuePair<string, string>("Isle of Balfiera", "Blackhead") };
+            new List<KeyValuePair<string, string>> {
+                new KeyValuePair<string, string>("Isle of Balfiera", "Blackhead"),
+                new KeyValuePair<string, string>("Mournoth", "Zagoparia"),
+                new KeyValuePair<string, string>("Betony", "Whitefort")};
 
         //Would have prefered json to xml, but apparently JsonUtility is pretty much useless in Unity 2018.
         public class PortTown : object

@@ -74,6 +74,9 @@ namespace TediousTravel
         Dictionary<string, Vector2> offsetLookup = new Dictionary<string, Vector2>();
         string[] selectedRegionMapNames;    //different maps for selected region
 
+        string gotoLocation = null;
+        int gotoRegion;
+
         DFBitmap regionPickerBitmap;
         ImgFile loadedImg;
         DFRegion currentDFRegion;
@@ -197,6 +200,12 @@ namespace TediousTravel
             get { return identifying && findingLocation && RegionSelected; }
         }
 
+        public void GotoLocation(string placeName, int region)
+        {
+            gotoLocation = placeName;
+            gotoRegion = region;
+        }
+
         #endregion
 
 
@@ -302,6 +311,8 @@ namespace TediousTravel
         public override void OnPop()
         {
             isShowing = false;
+            findingLocation = false;
+            gotoLocation = null;
             base.OnPop();
         }
 
@@ -417,6 +428,15 @@ namespace TediousTravel
 
             //identifiying
             AnimateIdentify();
+
+            // If a goto location specified, find it and ask if player wants to travel.
+            if (!string.IsNullOrEmpty(gotoLocation))
+            {
+                OpenRegionPanel(gotoRegion);
+                HandleLocationFindEvent(null, gotoLocation);
+                gotoLocation = null;
+            }
+
 
         }
 
