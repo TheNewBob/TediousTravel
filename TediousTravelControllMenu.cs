@@ -191,7 +191,7 @@ namespace TediousTravel
         {
             if (timeCompressionSetting < 5)
                 timeCompressionSetting += 1;
-            else timeCompressionSetting = Math.Max(25, timeCompressionSetting + 5);
+            else timeCompressionSetting = Math.Min(25, timeCompressionSetting + 5);
             timeCompressionTextbox.Text = timeCompressionSetting.ToString() + "x";
             RaiseOnTimeCompressionChangedEvent(timeCompressionSetting);
         }
