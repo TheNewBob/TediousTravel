@@ -1339,12 +1339,11 @@ namespace TediousTravel
 
             if (GameManager.Instance.PlayerEntity.GoldPieces < tripCost)
             {
-                DaggerfallMessageBox noMoneyMessageBox = new DaggerfallMessageBox(
-                    uiManager,
-                    DaggerfallMessageBox.CommonMessageBoxButtons.Nothing,
-                    "Unfortunately you do not have the " + tripCost + " gold pieces required for the " + days + " days journey");
-                noMoneyMessageBox.ClickAnywhereToClose = true;
-                noMoneyMessageBox.Show();
+                DaggerfallUI.MessageBox(new string[]
+                {
+                    "Unfortunately you do not have the " + tripCost + " gold",
+                    "   pieces required for the " + days + " days journey."
+                });
             }
             else
             {
