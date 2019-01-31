@@ -11,6 +11,8 @@ using DaggerfallWorkshop;
 using DaggerfallWorkshop.Utility;
 using DaggerfallConnect.Arena2;
 using DaggerfallConnect;
+using DaggerfallWorkshop.Game.Serialization;
+using DaggerfallWorkshop.Game.Utility;
 
 namespace TediousTravel
 {
@@ -25,11 +27,14 @@ namespace TediousTravel
         private PlayerCollision playerCollision = null;
         private AudioSource ridingAudioSource;
 
+        private float baseFixedDeltaTime;
+
         public TediousTravelMap TravelMap { get { return travelMap; } }
 
         private void Start()
         {
             TediousData.Instance.LoadPortTowns();
+            baseFixedDeltaTime = Time.fixedDeltaTime;
             DaggerfallUI.UIManager.OnWindowChange += travelMapInterceptor;
             travelMap = new TediousTravelMap(DaggerfallUI.UIManager, this);
             travelUi = new TediousTravelControllMenu(DaggerfallUI.UIManager, travelMap);
@@ -40,11 +45,22 @@ namespace TediousTravel
                 InterruptFastTravel();
             };
 
-            travelUi.OnTimeCompressionChanged += (newTimeCompression) => { Time.timeScale = newTimeCompression; };
+            travelUi.OnTimeCompressionChanged += (newTimeCompression) => { SetTimeScale(newTimeCompression); };
 
             ridingAudioSource = GameManager.Instance.TransportManager.GetComponent<AudioSource>();
             Debug.Log("riding audio source: " + ridingAudioSource);
 
+            // Clear destination for new or loaded games.
+            SaveLoadManager.OnLoad += (saveData) => { destinationName = ""; };
+            StartGameBehaviour.OnNewGame += () => { destinationName = ""; };
+        }
+
+        private void SetTimeScale(int timeScale)
+        {
+            // Must set fixed delta time to scale the fixed (physics) updates as well.
+            Time.timeScale = timeScale;
+            Time.fixedDeltaTime = timeScale * baseFixedDeltaTime; // Default is 0.02 or 50/s
+            //Debug.LogFormat("Set timescale= {0}, fixedDelta= {1}", timeScale, timeScale * baseFixedDeltaTime);
         }
 
         public void travelMapInterceptor(object sender, EventArgs e)
@@ -118,13 +134,7 @@ namespace TediousTravel
                 if (GameManager.Instance.AreEnemiesNearby())
                 {
                     travelUi.CloseWindow();
-                    var enemiesNearbyMessageBox = new DaggerfallMessageBox(
-                        DaggerfallUI.UIManager,
-                        DaggerfallMessageBox.CommonMessageBoxButtons.Nothing,
-                        "Somebody is seeking to put a premature end to your journey...");
-                    enemiesNearbyMessageBox.ClickAnywhereToClose = true;
-                    enemiesNearbyMessageBox.ScreenDimColor = Color.clear;
-                    DaggerfallUI.Instance.UserInterfaceManager.PushWindow(enemiesNearbyMessageBox);
+                    DaggerfallUI.MessageBox("Somebody is seeking to put a premature end to your journey...");
                     return;
                 }
                     
@@ -151,7 +161,7 @@ namespace TediousTravel
 
             this.destinationSummary = destinationSummary;
             DisableAnnoyingSounds();
-            Time.timeScale = travelUi.TimeCompressionSetting;
+            SetTimeScale(travelUi.TimeCompressionSetting);
             Debug.Log("started tedious travel");
         }
 
@@ -161,7 +171,7 @@ namespace TediousTravel
         /// </summary>
         public void InterruptFastTravel()
         {
-            Time.timeScale = 1;
+            SetTimeScale(1);
             playerAutopilot = null;
             GameManager.Instance.PlayerMouseLook.enableMouseLook = true;
             GameManager.Instance.PlayerMouseLook.lockCursor = true;
