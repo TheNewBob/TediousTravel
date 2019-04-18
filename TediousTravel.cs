@@ -13,6 +13,8 @@ using DaggerfallConnect.Arena2;
 using DaggerfallConnect;
 using DaggerfallWorkshop.Game.Serialization;
 using DaggerfallWorkshop.Game.Utility;
+using DaggerfallWorkshop.Game.Entity;
+using DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings;
 
 namespace TediousTravel
 {
@@ -26,13 +28,40 @@ namespace TediousTravel
         private string destinationName = "";
         private PlayerCollision playerCollision = null;
         private AudioSource ridingAudioSource;
-
         private float baseFixedDeltaTime;
 
         public TediousTravelMap TravelMap { get { return travelMap; } }
 
+        //Kaedius
+        private PlayerEntity playerEntity;
+        private HUDVitals hudVitals;
+
+        private bool encounterAvoidanceSystem;
+        private bool encounterAvoidanceInform;
+        private bool onlyRunning;
+
+        private double encounterAvoidanceMax;
+        private double playerSkillRunning;
+        private double playerSkillSwimming;
+        private double encounterAvoidance;
+     
+        public static Mod mod;
+        //Kaedius
+
         private void Start()
         {
+            //Kaedius
+            ModSettings settings     = mod.GetSettings();
+
+            encounterAvoidanceSystem = settings.GetValue<bool>("Avoid Random Encounters", "AvoidRandomEncounters");
+            encounterAvoidanceMax    = settings.GetValue<float>("Avoid Random Encounters", "MaxChanceToAvoidEncounter");
+            encounterAvoidanceInform = settings.GetValue<bool>("Avoid Random Encounters", "InformPlayer");
+            onlyRunning              = settings.GetValue<bool>("Avoid Random Encounters", "OnlyUseRunningSkill");
+
+            hudVitals    = DaggerfallUI.Instance.DaggerfallHUD.HUDVitals;
+            playerEntity = GameManager.Instance.PlayerEntity;
+            //Kaedius
+
             TediousData.Instance.LoadPortTowns();
             baseFixedDeltaTime = Time.fixedDeltaTime;
             DaggerfallUI.UIManager.OnWindowChange += travelMapInterceptor;
@@ -70,7 +99,6 @@ namespace TediousTravel
             Debug.Log("top window: " + window);
             if (window != null && !travelMap.IsShowing && window.GetType() == typeof(DaggerfallTravelMapWindow))
             {
-
                 DaggerfallTravelMapWindow originalTravelMap = window as DaggerfallTravelMapWindow;
                 // check if the travel map was brought up to check for a destination for teleportation and let it proceed if yes.
                 var isTeleportation = originalTravelMap.GetType().GetField("teleportationTravel",
@@ -115,7 +143,6 @@ namespace TediousTravel
                 {
                     manager.PushWindow(travelMap);
                 }
-
             }
         }
 
@@ -123,21 +150,71 @@ namespace TediousTravel
         {
             if (playerAutopilot != null)
             {
-
                 if (!travelUi.isShowing)
                 {
                     DaggerfallUI.UIManager.PushWindow(travelUi);
                 }
-
+                
                 playerAutopilot.Update();
+
+                //Kaedius
+                hudVitals.Update();
 
                 if (GameManager.Instance.AreEnemiesNearby())
                 {
-                    travelUi.CloseWindow();
-                    DaggerfallUI.MessageBox("Somebody is seeking to put a premature end to your journey...");
-                    return;
+                    //Kaedius
+                    if (encounterAvoidanceSystem)
+                    {
+                        playerSkillRunning  = playerEntity.Skills.GetLiveSkillValue(DFCareer.Skills.Running);
+                        playerSkillSwimming = playerEntity.Skills.GetLiveSkillValue(DFCareer.Skills.Swimming);
+
+                        if (onlyRunning)
+                            encounterAvoidance = (playerSkillRunning) / 100;
+                        else
+                            encounterAvoidance = (playerSkillRunning + playerSkillSwimming) / 200;
+
+                        double rand = UnityEngine.Random.value;
+
+                        //Used to make numbers rounded and neat
+                        encounterAvoidance = Math.Round((encounterAvoidance + 0.00001) * 100) / 100;
+                        rand = Math.Round((rand + 0.00001) * 100) / 100;
+
+                        /*
+                        Debug.Log("Running: " + playerSkillRunning);
+                        Debug.Log("Swimming: " + playerSkillSwimming);
+                        Debug.Log("Avoidance: " + encounterAvoidance);
+                        Debug.Log("rand: " + rand);                    
+                        */
+
+                        //Capped at mod settings
+                        if (encounterAvoidance > encounterAvoidanceMax)
+                            encounterAvoidance = encounterAvoidanceMax;
+
+                        if (encounterAvoidance >= rand)
+                        {
+                            GameManager.Instance.ClearEnemies(); //Possible to clear unintended enemies/spawners?
+
+                            if (encounterAvoidanceInform)
+                            {
+                                travelUi.CloseWindow();
+                                DaggerfallUI.MessageBox("You avoid an enemy seeking to end your journey.");
+                                return;
+                            }
+                        }
+                        else
+                        {
+                            travelUi.CloseWindow();
+                            DaggerfallUI.MessageBox("An enemy is seeking to bring a premature end to your journey...");
+                            return;
+                        }
+                    }
+                    else
+                    {
+                        travelUi.CloseWindow();
+                        DaggerfallUI.MessageBox("An enemy is seeking to bring a premature end to your journey...");
+                        return;
+                    }
                 }
-                    
             }
         }
 
@@ -206,13 +283,17 @@ namespace TediousTravel
         public static void Init(InitParams initParams)
         {
             Debug.Log("main init");
+
+            //Kaedius
+            mod = initParams.Mod;
+            //Kaedius
+
             //just an example of how to add a mono-behavior to a scene.
             GameObject gObject = new GameObject("tedious");
             TediousTravel tediousTravel = gObject.AddComponent<TediousTravel>();
-            
+
             //after finishing, set the mod's IsReady flag to true.
             ModManager.Instance.GetMod(initParams.ModTitle).IsReady = true;
         }
-
     }
 }

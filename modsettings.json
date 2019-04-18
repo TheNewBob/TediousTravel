@@ -1,0 +1,43 @@
+{
+    "Version": "1.0",
+    "Sections": [
+        {
+            "Name": "Avoid Random Encounters",
+            "Description": "Enable chance to avoid random encounters during travel based on player Running and Swimming skill.",
+            "IsAdvanced": false,
+            "Keys": [
+                {
+                    "Value": true,
+                    "Name": "AvoidRandomEncounters",
+                    "Description": "Enable Disable",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ToggleKey"
+                },
+                {
+                    "Min": 0.0,
+                    "Max": 1.0,
+                    "Value": 1.0,
+                    "Name": "MaxChanceToAvoidEncounter",
+                    "Description": "1.0 = 100% chance to avoid an encounter at 100 Running and 100 Swimming)",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey"
+                },
+                {
+                    "Value": true,
+                    "Name": "InformPlayer",
+                    "Description": "Whether to inform the player when a random encounter has been avoided or continue travel",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ToggleKey"
+                },
+                {
+                    "Value": false,
+                    "Name": "OnlyUseRunningSkill",
+                    "Description": "Removes Swimming skill as a factor for determining avoidance",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ToggleKey"
+                }
+            ],
+            "$version": "v1"
+        }
+    ]
+}
