@@ -1,0 +1,29 @@
+{
+    "Version": "1.0",
+    "Sections": [
+        {
+            "Name": "AvoidRandomEncounters",
+            "Description": "Enable ability to avoid a random encounter based on the higher of the Running or Stealth skill.",
+            "IsAdvanced": false,
+            "Keys": [
+                {
+                    "Value": true,
+                    "Name": "AvoidRandomEncounters",
+                    "Description": "Enable Disable",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ToggleKey"
+                },
+                {
+                    "Min": 1,
+                    "Max": 100,
+                    "Value": 80,
+                    "Name": "MaxChanceToAvoidEncounter",
+                    "Description": "Maximum percent chance to avoid an encounter with 100 stealth or running. Scales.",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderIntKey"
+                }
+            ],
+            "$version": "v1"
+        }
+    ]
+}

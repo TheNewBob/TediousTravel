@@ -12,6 +12,8 @@
         "Assets/Untracked/TediousTravel/TediousTravelMap.cs",
         "Assets/Untracked/TediousTravel/PlayerAutoPilot.cs",
         "Assets/Untracked/TediousTravel/tedioustravel.dfmod.json",
-        "Assets/Untracked/TediousTravel/TediousData.cs"
+        "Assets/Untracked/TediousTravel/TediousData.cs",
+        "Assets/Untracked/TediousTravel/modsettings.json",
+        "Assets/Untracked/TediousTravel/modpresets.json"
     ]
 }
