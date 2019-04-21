@@ -2,8 +2,8 @@
     "Version": "1.0",
     "Sections": [
         {
-            "Name": "Avoid Random Encounters",
-            "Description": "Enable chance to avoid random encounters during travel based on player Running and Swimming skill.",
+            "Name": "AvoidRandomEncounters",
+            "Description": "Enable ability to avoid a random encounter based on the higher of the Running or Stealth skill.",
             "IsAdvanced": false,
             "Keys": [
                 {
@@ -14,27 +14,13 @@
                     "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ToggleKey"
                 },
                 {
-                    "Min": 0.0,
-                    "Max": 1.0,
-                    "Value": 1.0,
+                    "Min": 1,
+                    "Max": 100,
+                    "Value": 80,
                     "Name": "MaxChanceToAvoidEncounter",
-                    "Description": "1.0 = 100% chance to avoid an encounter at 100 Running and 100 Swimming)",
+                    "Description": "Maximum percent chance to avoid an encounter with 100 stealth or running. Scales.",
                     "$version": "v1",
-                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey"
-                },
-                {
-                    "Value": true,
-                    "Name": "InformPlayer",
-                    "Description": "Whether to inform the player when a random encounter has been avoided or continue travel",
-                    "$version": "v1",
-                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ToggleKey"
-                },
-                {
-                    "Value": false,
-                    "Name": "OnlyUseRunningSkill",
-                    "Description": "Removes Swimming skill as a factor for determining avoidance",
-                    "$version": "v1",
-                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ToggleKey"
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderIntKey"
                 }
             ],
             "$version": "v1"
