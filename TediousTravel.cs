@@ -130,6 +130,7 @@ namespace TediousTravel
                 }
 
                 playerAutopilot.Update();
+                DaggerfallUI.Instance.DaggerfallHUD.HUDVitals.Update();
 
                 if (GameManager.Instance.AreEnemiesNearby())
                 {

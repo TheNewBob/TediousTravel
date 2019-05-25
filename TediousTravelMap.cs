@@ -447,62 +447,66 @@ namespace TediousTravel
         // Initial button setup
         void SetupButtons()
         {
-            // Exit button
-            exitButton = DaggerfallUI.AddButton(new Rect(278, 175, 39, 22), NativePanel);
-            exitButton.OnMouseClick += ExitButtonClickHandler;
+			// Exit button
+			exitButton = DaggerfallUI.AddButton(new Rect(278, 175, 39, 22), NativePanel);
+			exitButton.OnMouseClick += ExitButtonClickHandler;
 
-            // Find button
-            findButton = DaggerfallUI.AddButton(new Rect(3, 175, findButtonTexture.width, findButtonTexture.height), NativePanel);
-            findButton.BackgroundTexture = findButtonTexture;
-            findButton.OnMouseClick += FindlocationButtonClickHandler;
+			// Find button
+			findButton = DaggerfallUI.AddButton(new Rect(3, 175, findButtonRect.width, findButtonRect.height), NativePanel);
+			findButton.BackgroundTexture = findButtonTexture;
+			findButton.OnMouseClick += FindlocationButtonClickHandler;
 
-            // I'm At button
-            atButton = DaggerfallUI.AddButton(new Rect(3, 186, atButtonTexture.width, atButtonTexture.height), NativePanel);
-            atButton.BackgroundTexture = atButtonTexture;
-            atButton.OnMouseClick += AtButtonClickHandler;
+			// I'm At button
+			atButton = DaggerfallUI.AddButton(new Rect(3, 186, atButtonRect.width, atButtonRect.height), NativePanel);
+			atButton.BackgroundTexture = atButtonTexture;
+			atButton.OnMouseClick += AtButtonClickHandler;
 
-            // Dungeons filter button
-            //dungeonsFilterButton.Position = new Vector2(50, 175);
-            //dungeonsFilterButton.Size = new Vector2(dungeonsFilterButtonSrcRect.width, dungeonsFilterButtonSrcRect.height);
-            dungeonsFilterButton = DaggerfallUI.AddButton(
-                new Rect(50, 175, dungeonsFilterButtonSrcRect.width, dungeonsFilterButtonSrcRect.height), NativePanel);
-            dungeonsFilterButton.Name = "dungeonsFilterButton";
-            dungeonsFilterButton.OnMouseClick += FilterButtonClickHandler;
+			// Dungeons filter button
+			Vector2 dungeonFilterButtonPosition = new Vector2(50, 175);
+			Vector2 dungeonFilterButtonSize = new Vector2(dungeonsFilterButtonSrcRect.width, dungeonsFilterButtonSrcRect.height);
+			dungeonsFilterButton = DaggerfallUI.AddButton(dungeonFilterButtonPosition, dungeonFilterButtonSize, NativePanel);
+			dungeonsFilterButton.Name = "dungeonsFilterButton";
+			dungeonsFilterButton.OnMouseClick += FilterButtonClickHandler;
 
-            // Temples filter button
-            templesFilterButton = DaggerfallUI.AddButton(
-                new Rect(50, 186, templesFilterButtonSrcRect.width, templesFilterButtonSrcRect.height), NativePanel);    
-            templesFilterButton.Name = "templesFilterButton";
-            templesFilterButton.OnMouseClick += FilterButtonClickHandler;
+			// Temples filter button
+			Vector2 templeFilterButtonPosition = new Vector2(50, 186);
+			Vector2 templeFilterButtonSize = new Vector2(templesFilterButtonSrcRect.width, templesFilterButtonSrcRect.height);
+			templesFilterButton = DaggerfallUI.AddButton(templeFilterButtonPosition, templeFilterButtonSize, NativePanel);
+			templesFilterButton.Name = "templesFilterButton";
+			templesFilterButton.OnMouseClick += FilterButtonClickHandler;
 
-            // Homes filter button
-            homesFilterButton = DaggerfallUI.AddButton(
-                new Rect(149, 175, homesFilterButtonSrcRect.width, homesFilterButtonSrcRect.height), NativePanel);
-            homesFilterButton.Name = "homesFilterButton";
-            homesFilterButton.OnMouseClick += FilterButtonClickHandler;
+			// Homes filter button
+			Vector2 homesFilterButtonPosition = new Vector2(149, 175);
+			Vector2 homesFilterButtonSize = new Vector2(homesFilterButtonSrcRect.width, homesFilterButtonSrcRect.height);
+			homesFilterButton = DaggerfallUI.AddButton(homesFilterButtonPosition, homesFilterButtonSize, NativePanel);
+			homesFilterButton.Name = "homesFilterButton";
+			homesFilterButton.OnMouseClick += FilterButtonClickHandler;
 
-            // Towns filter button
-            townsFilterButton = DaggerfallUI.AddButton(
-                new Rect(149, 186, townsFilterButtonSrcRect.width, townsFilterButtonSrcRect.height), NativePanel);
-            townsFilterButton.Name = "townsFilterButton";
-            townsFilterButton.OnMouseClick += FilterButtonClickHandler;
+			// Towns filter button
+			Vector2 townsFilterButtonPosition = new Vector2(149, 186);
+			Vector2 townsFilterButtonSize = new Vector2(townsFilterButtonSrcRect.width, townsFilterButtonSrcRect.height);
+			townsFilterButton = DaggerfallUI.AddButton(townsFilterButtonPosition, townsFilterButtonSize, NativePanel);
+			townsFilterButton.Name = "townsFilterButton";
+			townsFilterButton.OnMouseClick += FilterButtonClickHandler;
 
-            // Horizontal arrow button
-            horizontalArrowButton = DaggerfallUI.AddButton(
-                new Rect(231, 176, leftArrowTexture.width, leftArrowTexture.height), NativePanel);
-            horizontalArrowButton.Enabled = false;
-            horizontalArrowButton.Name = "horizontalArrowButton";
-            horizontalArrowButton.OnMouseClick += ArrowButtonClickHandler;
+			// Horizontal arrow button
+			Vector2 horizontalArrowButtonPosition = new Vector2(231, 176);
+			Vector2 horizontalArrowButtonSize = new Vector2(22, 20);
+			horizontalArrowButton = DaggerfallUI.AddButton(horizontalArrowButtonPosition, horizontalArrowButtonSize, NativePanel);
+			horizontalArrowButton.Enabled = false;
+			horizontalArrowButton.Name = "horizontalArrowButton";
+			horizontalArrowButton.OnMouseClick += ArrowButtonClickHandler;
 
-            // Vertical arrow button
-            verticalArrowButton = DaggerfallUI.AddButton(
-                new Rect(254, 176, upArrowTexture.width, upArrowTexture.height), NativePanel);
-            verticalArrowButton.Enabled = false;
-            verticalArrowButton.Name = "verticalArrowButton";
-            verticalArrowButton.OnMouseClick += ArrowButtonClickHandler;
+			// Vertical arrow button
+			Vector2 verticalArrowButtonPosition = new Vector2(254, 176);
+			Vector2 verticalArrowButtonSize = new Vector2(22, 20);
+			verticalArrowButton = DaggerfallUI.AddButton(verticalArrowButtonPosition, verticalArrowButtonSize, NativePanel);
+			verticalArrowButton.Enabled = false;
+			verticalArrowButton.Name = "verticalArrowButton";
+			verticalArrowButton.OnMouseClick += ArrowButtonClickHandler;
 
-            // Ports filter
-            portButton = DaggerfallUI.AddButton(
+			// Ports filter
+			portButton = DaggerfallUI.AddButton(
                 new Rect(231, 175, 45, 22), NativePanel);
             portButton.BackgroundColor = new Color(0.0f, 0.5f, 0.0f, 0.4f);
             portButton.Label.Text = "Ports";
