@@ -149,6 +149,7 @@ namespace TediousTravel
                 }
 
                 playerAutopilot.Update();
+
 				hudVitals.Update();
 
 				if (GameManager.Instance.AreEnemiesNearby() && delayCombat <= 0.0f)
@@ -178,7 +179,8 @@ namespace TediousTravel
 						delayCombat = 0.0f;
 				}
 			}
-        }
+
+    }
 
 		private void AvoidEncounter_OnButtonClick(DaggerfallMessageBox sender, DaggerfallMessageBox.MessageBoxButtons button)
 		{

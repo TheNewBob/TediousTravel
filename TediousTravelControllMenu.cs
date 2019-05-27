@@ -51,8 +51,6 @@ namespace TediousTravel
 
         public bool isShowing = false;
 
-        KeyCode toggleClosedBinding;
-
         Color mainPanelBackgroundColor = new Color(0.0f, 0f, 0.0f, 1.0f);
         Color buttonBackgroundColor = new Color(0.0f, 0.5f, 0.0f, 0.4f);
         Color cancelButtonBackgroundColor = new Color(0.7f, 0.0f, 0.0f, 0.4f);
@@ -83,7 +81,10 @@ namespace TediousTravel
             // Clear background
             ParentPanel.BackgroundColor = Color.clear;
             travelMap = mapWindow;
-            this.pauseWhileOpened = false;
+            pauseWhileOpened = false;
+
+            // Override base.Update calling CancelWindow when esc is pressed. CancelWindow method otherwise uneffected.
+            AllowCancel = false;
         }
 
         #endregion
@@ -148,6 +149,9 @@ namespace TediousTravel
         public override void Update()
         {
             base.Update();
+
+            if (Input.GetKeyUp(exitKey))
+                CloseWindow();
         }
 
         public override void Draw()
