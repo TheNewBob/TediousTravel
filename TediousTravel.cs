@@ -43,8 +43,9 @@ namespace TediousTravel
 		private readonly float delayCombatTime = 100.0f;
 
 		public static Mod mod;
+        private bool enemiesNearby = false;
 
-		private void Start()
+        private void Start()
         {
 			ModSettings settings = mod.GetSettings();
 
@@ -146,14 +147,18 @@ namespace TediousTravel
                 if (!travelUi.isShowing)
                 {
                     DaggerfallUI.UIManager.PushWindow(travelUi);
+                    enemiesNearby = false;
+                    GameManager.OnEncounter += GameManager_OnEncounter;
                 }
 
                 playerAutopilot.Update();
 
 				hudVitals.Update();
 
-				if (GameManager.Instance.AreEnemiesNearby() && delayCombat <= 0.0f)
+				if ((enemiesNearby || GameManager.Instance.AreEnemiesNearby()) && delayCombat <= 0.0f)
 				{
+                    Debug.Log("enemiesNearby = " + enemiesNearby + " AreEnemiesNearby() = " + GameManager.Instance.AreEnemiesNearby());
+                    enemiesNearby = false;
 					if (encounterAvoidanceSystem)
 					{
 						InterruptFastTravel();
@@ -166,6 +171,7 @@ namespace TediousTravel
 					}
 					else
 					{
+                        GameManager.OnEncounter -= GameManager_OnEncounter;
 						travelUi.CloseWindow();
 						DaggerfallUI.MessageBox("An enemy is seeking to bring a premature end to your journey...");
 						return;
@@ -202,9 +208,15 @@ namespace TediousTravel
 			{
 				travelUi.CloseWindow();
 			}
-		}
+        }
 
-		private bool AttemptAvoid()
+        private void GameManager_OnEncounter()
+        {
+            enemiesNearby = true;
+        }
+
+
+        private bool AttemptAvoid()
 		{
 			int playerSkillRunning = playerEntity.Skills.GetLiveSkillValue(DFCareer.Skills.Running);
 			int playerSkillStealth = playerEntity.Skills.GetLiveSkillValue(DFCareer.Skills.Stealth);
