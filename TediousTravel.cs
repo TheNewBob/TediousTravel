@@ -72,8 +72,8 @@ namespace TediousTravel
             Debug.Log("riding audio source: " + ridingAudioSource);
 
             // Clear destination for new or loaded games.
-            SaveLoadManager.OnLoad += (saveData) => { destinationName = ""; };
-            StartGameBehaviour.OnNewGame += () => { destinationName = ""; };
+            SaveLoadManager.OnLoad += (saveData) => { InterruptFastTravel(); destinationName = ""; };
+            StartGameBehaviour.OnNewGame += () => { InterruptFastTravel(); destinationName = ""; };
         }
 
         private void SetTimeScale(int timeScale)
