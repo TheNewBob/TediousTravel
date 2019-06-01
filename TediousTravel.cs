@@ -43,7 +43,7 @@ namespace TediousTravel
 		private readonly float delayCombatTime = 100.0f;
 
 		public static Mod mod;
-        private bool enemiesNearby = false;
+        private bool encounter = false;
 
         private void Start()
         {
@@ -147,7 +147,7 @@ namespace TediousTravel
                 if (!travelUi.isShowing)
                 {
                     DaggerfallUI.UIManager.PushWindow(travelUi);
-                    enemiesNearby = false;
+                    encounter = false;
                     GameManager.OnEncounter += GameManager_OnEncounter;
                 }
 
@@ -155,10 +155,10 @@ namespace TediousTravel
 
 				hudVitals.Update();
 
-				if ((enemiesNearby || GameManager.Instance.AreEnemiesNearby()) && delayCombat <= 0.0f)
+				if ((encounter || GameManager.Instance.AreEnemiesNearby()) && delayCombat <= 0.0f)
 				{
-                    Debug.Log("enemiesNearby = " + enemiesNearby + " AreEnemiesNearby() = " + GameManager.Instance.AreEnemiesNearby());
-                    enemiesNearby = false;
+                    Debug.Log("encounter = " + encounter + " AreEnemiesNearby() = " + GameManager.Instance.AreEnemiesNearby());
+                    encounter = false;
 					if (encounterAvoidanceSystem)
 					{
 						InterruptFastTravel();
@@ -212,7 +212,7 @@ namespace TediousTravel
 
         private void GameManager_OnEncounter()
         {
-            enemiesNearby = true;
+            encounter = true;
         }
 
 
