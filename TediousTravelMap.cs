@@ -1722,9 +1722,7 @@ namespace TediousTravel
         void HandleLocationFindEvent(DaggerfallInputMessageBox inputMessageBox, string locationName)
         {
             List<DistanceMatch> matching;
-            if (locationName == "**")
-                FindLocationSelfcheck();
-            else if (FindLocation(locationName, out matching))
+            if (FindLocation(locationName, out matching))
             {
                 if (matching.Count == 1)
                 { //place flashing crosshair over location
@@ -1821,50 +1819,6 @@ namespace TediousTravel
             {
                 return relevance >= threshold;
             }
-        }
-
-        // Use "map_reveallocations" first for best results
-        private void FindLocationSelfcheck()
-        {
-            int issues = 0;
-            int warnings = 0;
-            List<DistanceMatch> matching;
-            foreach (string location in currentDFRegion.MapNameLookup.Keys)
-            {
-                if (FindLocation(location, out matching))
-                {
-                    if (matching.Count == 1)
-                    {
-                        if (matching[0].text != location)
-                        {
-                            Debug.Log("Finding " + location + " returned " + matching[0].text);
-                            issues++;
-                        }
-                    }
-                    else
-                    {
-                        Debug.Log("Finding " + location + " returned several results");
-                        if (matching[0].text == location)
-                            warnings++;
-                        else if (matching.Exists(match => match.text == location))
-                        {
-                            Debug.Log(location + " did not make it first in the results");
-                            warnings++;
-                        }
-                        else
-                        {
-                            Debug.Log(location + " did not make it at all in the results");
-                            issues++;
-                        }
-                    }
-                }
-                else
-                {
-                    Debug.Log("FindLocation(" + location + ") failed");
-                    issues++;
-                }
-            }
-            DaggerfallUI.MessageBox(issues + " issue(s), " + warnings + " warning(s) found");
         }
 
         //creates a ListPickerWindow with a list of locations from current region
