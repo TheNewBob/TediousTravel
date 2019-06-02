@@ -25,7 +25,7 @@ namespace TediousTravel
         private InputManager inputManager = null;
         private ContentReader.MapSummary destinationSummary;
         private PlayerAutoPilot playerAutopilot = null;
-        private string destinationName = "";
+        private string destinationName = null;
         private PlayerCollision playerCollision = null;
         private AudioSource ridingAudioSource;
 
@@ -60,7 +60,7 @@ namespace TediousTravel
             travelMap = new TediousTravelMap(DaggerfallUI.UIManager, this);
             travelUi = new TediousTravelControllMenu(DaggerfallUI.UIManager, travelMap);
             travelUi.OnCancel += (sender) => {
-                destinationName = "";
+                destinationName = null;
             };
             travelUi.OnClose += () => {
                 InterruptFastTravel();
@@ -72,8 +72,8 @@ namespace TediousTravel
             Debug.Log("riding audio source: " + ridingAudioSource);
 
             // Clear destination for new or loaded games.
-            SaveLoadManager.OnLoad += (saveData) => { InterruptFastTravel(); destinationName = ""; };
-            StartGameBehaviour.OnNewGame += () => { InterruptFastTravel(); destinationName = ""; };
+            SaveLoadManager.OnLoad += (saveData) => { destinationName = null; };
+            StartGameBehaviour.OnNewGame += () => { destinationName = null; };
         }
 
         private void SetTimeScale(int timeScale)
@@ -111,7 +111,7 @@ namespace TediousTravel
                 originalTravelMap.CloseWindow();
 
                 // if a destination was picked, ask whether to resume or open map
-                if (destinationName != "")
+                if (destinationName != null)
                 {
                     DaggerfallMessageBox confirmTravelBox = new DaggerfallMessageBox(manager,
                         DaggerfallMessageBox.CommonMessageBoxButtons.YesNo,
@@ -143,6 +143,12 @@ namespace TediousTravel
         {
             if (playerAutopilot != null)
             {
+                if (destinationName == null)
+                {
+                    InterruptFastTravel();
+                    return;
+                }
+
                 if (!travelUi.isShowing)
                 {
                     DaggerfallUI.UIManager.PushWindow(travelUi);
