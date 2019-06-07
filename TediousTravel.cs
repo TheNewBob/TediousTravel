@@ -209,17 +209,12 @@ namespace TediousTravel
 			int playerSkillRunning = playerEntity.Skills.GetLiveSkillValue(DFCareer.Skills.Running);
 			int playerSkillStealth = playerEntity.Skills.GetLiveSkillValue(DFCareer.Skills.Stealth);
 
-			int successChance = playerSkillRunning > playerSkillStealth ? playerSkillRunning : playerSkillStealth;
+			int successChance =  Mathf.Max(playerSkillRunning, playerSkillStealth);
 
 			//Scaled to mod settings
-			successChance = successChance / (100 / maxSuccessChance);
+			successChance = successChance * maxSuccessChance / 100;
 
-			bool tempBool = UnityEngine.Random.Range(0, 101) <= successChance;
-
-			if (tempBool)
-				return true;
-			else
-				return false;
+			return Dice100.SuccessRoll(successChance);
 		}
 
 		public void StartFastTravel(ContentReader.MapSummary destinationSummary)
