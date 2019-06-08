@@ -135,10 +135,16 @@ namespace TediousTravel
         public event OnArrivalHandler OnArrival;
         void RaiseOnArrivalEvent()
         {
-            // set the player up so he's facing the destination.
-            mouseLook.Yaw = yawVector.y;
+            MouseLookAtDestination();
             if (OnArrival != null)
                 OnArrival();
+        }
+
+        public void MouseLookAtDestination()
+        {
+            // set the player up so he's facing the destination.
+            mouseLook.Pitch = 0f;
+            mouseLook.Yaw = yawVector.y;
         }
     }
 

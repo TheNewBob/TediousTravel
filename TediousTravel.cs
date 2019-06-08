@@ -259,10 +259,11 @@ namespace TediousTravel
         public void InterruptFastTravel()
         {
             SetTimeScale(1);
-            playerAutopilot = null;
             GameManager.Instance.PlayerMouseLook.enableMouseLook = true;
             GameManager.Instance.PlayerMouseLook.lockCursor = true;
             GameManager.Instance.PlayerMouseLook.simpleCursorLock = false;
+            playerAutopilot.MouseLookAtDestination();
+            playerAutopilot = null;
             EnableAnnoyingSounds();
         }
 
