@@ -1,19 +1,19 @@
 {
     "ModTitle": "TediousTravel",
-    "ModVersion": "0.4.0",
+    "ModVersion": "0.4.2-SNAPSHOT",
     "ModAuthor": "Jedidia",
     "ContactInfo": "",
     "DFUnity_Version": "0.5.505",
     "ModDescription": "Travel through the actual daggerfall, see the sights, get eaten by a grue. Made slightly more bearable by time compression.",
     "GUID": "388497e0-6eca-4710-b83a-e9edc0a6a02b",
     "Files": [
-        "Assets/Untracked/TediousTravel/TediousTravel.cs",
-        "Assets/Untracked/TediousTravel/TediousTravelControllMenu.cs",
-        "Assets/Untracked/TediousTravel/TediousTravelMap.cs",
-        "Assets/Untracked/TediousTravel/PlayerAutoPilot.cs",
-        "Assets/Untracked/TediousTravel/tedioustravel.dfmod.json",
-        "Assets/Untracked/TediousTravel/TediousData.cs",
-        "Assets/Untracked/TediousTravel/modsettings.json",
-        "Assets/Untracked/TediousTravel/modpresets.json"
+        "Assets/Game/Mods/TediousTravel/Scripts/TediousTravel.cs",
+        "Assets/Game/Mods/TediousTravel/Scripts/TediousTravelControllMenu.cs",
+        "Assets/Game/Mods/TediousTravel/Scripts/TediousTravelMap.cs",
+        "Assets/Game/Mods/TediousTravel/Scripts/PlayerAutoPilot.cs",
+        "Assets/Game/Mods/TediousTravel/tedioustravel.dfmod.json",
+        "Assets/Game/Mods/TediousTravel/Scripts/TediousData.cs",
+        "Assets/Game/Mods/TediousTravel/modsettings.json",
+        "Assets/Game/Mods/TediousTravel/modpresets.json"
     ]
 }

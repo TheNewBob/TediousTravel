@@ -10,8 +10,9 @@ though at least half of that time was spent chatting people up at ins, which are
 
 ## How to build
 
-Check out the daggerfall unity source code, then check out this repository into the Assets/Untracked folder.
-In the unity editor, open the mod tools, load in tedioustravel-dfmod.json, and click build.
+Check out the daggerfall unity source code, then check out this repository into the Assets/Game/Mods folder.
+The structure is now fully compliant with virtual mods, so all you have to do to run it within Unity is click play and activate the mod in the DFU mods screen.
+To build, open the mod tools, load in Assets/Game/Mods/TediousTravel/tedioustravel-dfmod.json, and click build.
 
 ## How to play
 
