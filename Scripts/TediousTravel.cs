@@ -42,12 +42,8 @@ namespace TediousTravel
         private bool delayCombat;
         private uint delayCombatTime;
 
-<<<<<<< HEAD:Scripts/TediousTravel.cs
-        public static Mod mod;
-=======
 		public static Mod mod;
         private bool encounter = false;
->>>>>>> 4e97b3813c02277130f7b3bf515388491e144e16:TediousTravel.cs
 
         private void Start()
         {
@@ -165,45 +161,13 @@ namespace TediousTravel
 
                 playerAutopilot.Update();
 
-<<<<<<< HEAD:Scripts/TediousTravel.cs
                 hudVitals.Update();
-=======
-				hudVitals.Update();
 
-				if ((encounter || GameManager.Instance.AreEnemiesNearby()) && delayCombat <= 0.0f)
-				{
+                if ((encounter || GameManager.Instance.AreEnemiesNearby()) && !delayCombat)
+                {
                     Debug.Log("encounter = " + encounter + " AreEnemiesNearby() = " + GameManager.Instance.AreEnemiesNearby());
                     encounter = false;
-					if (encounterAvoidanceSystem)
-					{
-						InterruptFastTravel();
 
-						UserInterfaceManager uiManager = DaggerfallUI.Instance.UserInterfaceManager;
-						DaggerfallMessageBox avoidEncounter = new DaggerfallMessageBox(uiManager, DaggerfallMessageBox.CommonMessageBoxButtons.YesNo,
-																					  "You approach a hostile encounter. Attempt to avoid it?", uiManager.TopWindow);
-						avoidEncounter.OnButtonClick += AvoidEncounter_OnButtonClick;
-						avoidEncounter.Show();
-					}
-					else
-					{
-                        GameManager.OnEncounter -= GameManager_OnEncounter;
-						travelUi.CloseWindow();
-						DaggerfallUI.MessageBox("An enemy is seeking to bring a premature end to your journey...");
-						return;
-					}
-				}
-				else if (delayCombat > 0.0f)
-				{
-					delayCombat -= Time.deltaTime;
-
-					if (delayCombat <= 0.0f)
-						delayCombat = 0.0f;
-				}
-			}
->>>>>>> 4e97b3813c02277130f7b3bf515388491e144e16:TediousTravel.cs
-
-                if (GameManager.Instance.AreEnemiesNearby() && !delayCombat)
-                {
                     if (encounterAvoidanceSystem)
                     {
                         travelUi.CloseWindow();
@@ -225,7 +189,6 @@ namespace TediousTravel
 
         }
 
-<<<<<<< HEAD:Scripts/TediousTravel.cs
         private void AttemptAvoid()
         {
             int playerSkillRunning = playerEntity.Skills.GetLiveSkillValue(DFCareer.Skills.Running);
@@ -261,29 +224,6 @@ namespace TediousTravel
             mb.Show();
         }
 
-        public void StartFastTravel(ContentReader.MapSummary destinationSummary)
-=======
-		private void AvoidEncounter_OnButtonClick(DaggerfallMessageBox sender, DaggerfallMessageBox.MessageBoxButtons button)
-		{
-			sender.CloseWindow();
-			if (button == DaggerfallMessageBox.MessageBoxButtons.Yes)
-			{
-				if (AttemptAvoid())
-				{
-					delayCombat = delayCombatTime;
-					StartFastTravel(destinationSummary);
-				}
-				else
-				{
-					travelUi.CloseWindow();
-					DaggerfallUI.MessageBox("You fail to avoid the encounter!");
-				}
-			}
-			else
-			{
-				travelUi.CloseWindow();
-			}
-        }
 
         private void GameManager_OnEncounter()
         {
@@ -291,26 +231,7 @@ namespace TediousTravel
         }
 
 
-        private bool AttemptAvoid()
-		{
-			int playerSkillRunning = playerEntity.Skills.GetLiveSkillValue(DFCareer.Skills.Running);
-			int playerSkillStealth = playerEntity.Skills.GetLiveSkillValue(DFCareer.Skills.Stealth);
-
-			int successChance = playerSkillRunning > playerSkillStealth ? playerSkillRunning : playerSkillStealth;
-
-			//Scaled to mod settings
-			successChance = successChance / (100 / maxSuccessChance);
-
-			bool tempBool = UnityEngine.Random.Range(0, 101) <= successChance;
-
-			if (tempBool)
-				return true;
-			else
-				return false;
-		}
-
 		public void StartFastTravel(ContentReader.MapSummary destinationSummary)
->>>>>>> 4e97b3813c02277130f7b3bf515388491e144e16:TediousTravel.cs
         {
             DFLocation targetLocation;
             if (DaggerfallUnity.Instance.ContentReader.GetLocation(
