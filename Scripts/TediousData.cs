@@ -11,7 +11,6 @@ namespace TediousTravel
 {
     public class TediousData
     {
-        private const string DATA_PATH = "/StreamingAssets/Mods/TediousData/";
         private const string PORTTOWNS_FILE = "porttowns.xml";
 
         // list of additional port towns
@@ -19,7 +18,11 @@ namespace TediousTravel
             new List<KeyValuePair<string, string>> {
                 new KeyValuePair<string, string>("Isle of Balfiera", "Blackhead"),
                 new KeyValuePair<string, string>("Mournoth", "Zagoparia"),
-                new KeyValuePair<string, string>("Betony", "Whitefort")};
+                new KeyValuePair<string, string>("Betony", "Whitefort"),
+                new KeyValuePair<string, string>("Tulune", "The Citadel of Hearthham"),
+                new KeyValuePair<string, string>("Tulune", "The Elyzanna Assembly"),
+            };
+
 
         //Would have prefered json to xml, but apparently JsonUtility is pretty much useless in Unity 2018.
         public class PortTown : object
@@ -68,11 +71,11 @@ namespace TediousTravel
          * Exports port towns from BSA files, because you essentially have to load the entire town exterior
          * before you can see whether it's a port town.
          */
-        public void GeneratePortTownData()
+        public void GeneratePortTownData(string dataPath)
         {
-            if (!File.Exists(Application.dataPath + DATA_PATH))
+            if (!File.Exists(Application.dataPath + dataPath))
             {
-                System.IO.Directory.CreateDirectory(Application.dataPath + DATA_PATH);
+                System.IO.Directory.CreateDirectory(Application.dataPath + dataPath);
             }
             DaggerfallUI.Instance.DaggerfallHUD.SetMidScreenText("Tedious data export complete. This won't be necessary in the future...");
 
@@ -103,7 +106,7 @@ namespace TediousTravel
             AddAditionalPortTowns(portTowns);
             Debug.Log("number of port towns: " + portTowns.locations.Count);
             var serializer = new XmlSerializer(typeof(PortTowns));
-            var stream = new FileStream(Application.dataPath + DATA_PATH + PORTTOWNS_FILE, FileMode.CreateNew);
+            var stream = new FileStream(Application.dataPath + dataPath + PORTTOWNS_FILE, FileMode.CreateNew);
             serializer.Serialize(stream, portTowns);
             stream.Close();
         }
@@ -123,15 +126,15 @@ namespace TediousTravel
             }
         }
 
-        public void LoadPortTowns()
+        public void LoadPortTowns(string dataPath)
         {
-            if (!File.Exists(Application.dataPath + DATA_PATH + PORTTOWNS_FILE))
+            if (!File.Exists(Application.dataPath + dataPath + PORTTOWNS_FILE))
             {
-                GeneratePortTownData();
+                GeneratePortTownData(dataPath);
             }
 
             var deserializer = new XmlSerializer(typeof(PortTowns));
-            var file = new FileStream(Application.dataPath + DATA_PATH + PORTTOWNS_FILE, FileMode.Open);
+            var file = new FileStream(Application.dataPath + dataPath + PORTTOWNS_FILE, FileMode.Open);
             var loadedData = deserializer.Deserialize(file) as PortTowns;
             file.Close();
 

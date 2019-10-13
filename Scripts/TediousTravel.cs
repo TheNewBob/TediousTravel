@@ -55,7 +55,7 @@ namespace TediousTravel
             hudVitals = DaggerfallUI.Instance.DaggerfallHUD.HUDVitals;
             playerEntity = GameManager.Instance.PlayerEntity;
 
-            TediousData.Instance.LoadPortTowns();
+            TediousData.Instance.LoadPortTowns(mod.PersistentDataDirectory);
             baseFixedDeltaTime = Time.fixedDeltaTime;
             DaggerfallUI.UIManager.OnWindowChange += travelMapInterceptor;
             travelMap = new TediousTravelMap(DaggerfallUI.UIManager, this);
