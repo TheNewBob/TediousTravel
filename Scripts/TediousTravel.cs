@@ -77,6 +77,7 @@ namespace TediousTravel
             // Clear destination for new or loaded games.
             SaveLoadManager.OnLoad += (saveData) => { destinationName = null; };
             StartGameBehaviour.OnNewGame += () => { destinationName = null; };
+            GameManager.OnEncounter += GameManager_OnEncounter;
         }
 
         private void SetTimeScale(int timeScale)
@@ -156,17 +157,17 @@ namespace TediousTravel
                 {
                     DaggerfallUI.UIManager.PushWindow(travelUi);
                     encounter = false;
-                    GameManager.OnEncounter += GameManager_OnEncounter;
                 }
 
                 playerAutopilot.Update();
 
                 hudVitals.Update();
 
-                if ((encounter || GameManager.Instance.AreEnemiesNearby()) && !delayCombat)
+                // This code only comes into play if enemies are nearby without an encounter event having been fired *first*.
+                // This is the case when the core spawns enemies nearby. When quests trigger encounters on the other hand, the OnEncounter event fires first and this code is never reached.
+                if (GameManager.Instance.AreEnemiesNearby() && !delayCombat)
                 {
-                    Debug.Log("encounter = " + encounter + " AreEnemiesNearby() = " + GameManager.Instance.AreEnemiesNearby());
-                    encounter = false;
+                    Debug.Log("enemies nearby while fast travelling");
 
                     if (encounterAvoidanceSystem)
                     {
@@ -227,7 +228,12 @@ namespace TediousTravel
 
         private void GameManager_OnEncounter()
         {
-            encounter = true;
+            if (travelUi.isShowing)
+            {
+                SetTimeScale(1); // Essentially redundant, but still helpful, since the close window event takes longer to trigger the time downscale.
+                travelUi.CloseWindow();
+                encounter = true;
+            }
         }
 
 
@@ -261,6 +267,7 @@ namespace TediousTravel
         /// </summary>
         public void InterruptFastTravel()
         {
+            Debug.Log("fast travel interrupted");
             SetTimeScale(1);
             GameManager.Instance.PlayerMouseLook.enableMouseLook = true;
             GameManager.Instance.PlayerMouseLook.lockCursor = true;
