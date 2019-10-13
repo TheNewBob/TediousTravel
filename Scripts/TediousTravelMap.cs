@@ -3,7 +3,7 @@
 // Original Author: Lypyl (lypyl@dfworkshop.net), Gavin Clayton (interkarma@dfworkshop.net)
 // Contributors:    Adapted to TediousTravel needs by Jedidia
 // 
-// Notes:
+// Notes: Use this line in command window to diff with original travel map: Tools.DiffFiles Assets\Scripts\Game\UserInterfaceWindows\DaggerfallTravelMapWindow.cs Assets\Game\Mods\TediousTravel\Scripts\TediousTravelMap.cs
 //
 
 
@@ -50,39 +50,35 @@ namespace TediousTravel
 
         #region Fields
 
-        FilterMode filterMode = FilterMode.Point;
-
         const int betonyIndex = 19;
 
-        const string nativeImgName = "TRAV0I00.IMG";
-        const string regionPickerImgName = "TRAV0I01.IMG";
-        const string findAtButtonImgName = "TRAV0I03.IMG";
-        const string locationFilterButtonEnabledImgName = "TRAV01I0.IMG";
-        const string locationFilterButtonDisabledImgName = "TRAV01I1.IMG";
-        const string downArrowImgName = "TRAVAI05.IMG";
-        const string upArrowImgName = "TRAVBI05.IMG";
-        const string rightArrowImgName = "TRAVCI05.IMG";
-        const string leftArrowImgName = "TRAVDI05.IMG";
-        const string regionBorderImgName = "MBRD00I0.IMG";
-        const string colorPaletteColName = "FMAP_PAL.COL";
-        const int regionPanelOffset = 12;
-        const int identifyFlashCount = 4;
-        const int identifyFlashCountSelected = 2;
-        const float identifyFlashInterval = 0.5f;
-
+        const string overworldImgName                       = "TRAV0I00.IMG";
+        const string regionPickerImgName                    = "TRAV0I01.IMG";
+        const string findAtButtonImgName                    = "TRAV0I03.IMG";
+        const string locationFilterButtonEnabledImgName     = "TRAV01I0.IMG";
+        const string locationFilterButtonDisabledImgName    = "TRAV01I1.IMG";
+        const string downArrowImgName                       = "TRAVAI05.IMG";
+        const string upArrowImgName                         = "TRAVBI05.IMG";
+        const string rightArrowImgName                      = "TRAVCI05.IMG";
+        const string leftArrowImgName                       = "TRAVDI05.IMG";
+        const string regionBorderImgName                    = "MBRD00I0.IMG";
+        const string colorPaletteColName                    = "FMAP_PAL.COL";
+        const int regionPanelOffset                         = 12;
+        const int identifyFlashCount                        = 4;
+        const int identifyFlashCountSelected                = 2;
+        const float identifyFlashInterval                   = 0.5f;
 
         bool portsFilter = false;
         ShipTravelData shipTravelDestination = null;
         TediousData tediousData = TediousData.Instance;
 
         Dictionary<string, Vector2> offsetLookup = new Dictionary<string, Vector2>();
-        string[] selectedRegionMapNames;    //different maps for selected region
+        string[] selectedRegionMapNames;
 
         string gotoLocation = null;
         int gotoRegion;
 
         DFBitmap regionPickerBitmap;
-        ImgFile loadedImg;
         DFRegion currentDFRegion;
         ContentReader.MapSummary locationSummary;
 
@@ -90,11 +86,16 @@ namespace TediousTravel
 
         Panel borderPanel;
         Panel regionTextureOverlayPanel;
+        Panel regionLocationDotsOverlayPanel;
         Panel playerRegionOverlayPanel;
-        Panel regionMapOverlayPanel;
+        Panel identifyOverlayPanel;
 
         TextLabel regionLabel;
 
+        Texture2D overworldTexture;
+        Texture2D identifyTexture;
+        Texture2D customRegionOverlayTexture;
+        Texture2D locationDotsTexture;
         Texture2D findButtonTexture;
         Texture2D atButtonTexture;
         Texture2D dungeonFilterButtonEnabled;
@@ -131,8 +132,8 @@ namespace TediousTravel
         Rect findButtonRect                 = new Rect(0, 0, 45, 11);
         Rect atButtonRect                   = new Rect(0, 11, 45, 11);
 
-        Color32[] pixelBuffer;
-        Color32[] overlayPixelBuffer;
+        Color32[] identifyPixelBuffer;
+        Color32[] locationDotsPixelBuffer;
         Color32[] locationPixelColors;                      //pixel colors for different location types
         Color identifyFlashColor;
 
@@ -166,6 +167,7 @@ namespace TediousTravel
         Vector2 zoomOffset = Vector2.zero;
         Vector2 zoomPosition = Vector2.zero;
 
+        readonly Dictionary<string, Texture2D> regionTextures = new Dictionary<string, Texture2D>();
         TediousTravel controller = null;
 
         //TextLabel coordsLabel = new TextLabel();
@@ -262,15 +264,15 @@ namespace TediousTravel
                 new Color32(colors.GetRed(243), colors.GetGreen(243), colors.GetBlue(243), 255),  //dungruin (R171, G51, B15)
                 new Color32(colors.GetRed(246), colors.GetGreen(246), colors.GetBlue(246), 255),  //graveyards (R147, G15, B7)
                 new Color32(colors.GetRed(0), colors.GetGreen(0), colors.GetBlue(0), 255),        //coven (R15, G15, B15)
-                new Color32(colors.GetRed(37), colors.GetGreen(37), colors.GetBlue(37), 255),     //farms (R165, G100, B70)
-                new Color32(colors.GetRed(35), colors.GetGreen(35), colors.GetBlue(35), 255),     //wealthy (R193, G133, B100)
-                new Color32(colors.GetRed(39), colors.GetGreen(39), colors.GetBlue(39), 255),     //poor (R140, G86, B55)
+                new Color32(colors.GetRed(53), colors.GetGreen(53), colors.GetBlue(53), 255),     //farms (R165, G100, B70)
+                new Color32(colors.GetRed(51), colors.GetGreen(51), colors.GetBlue(51), 255),     //wealthy (R193, G133, B100)
+                new Color32(colors.GetRed(55), colors.GetGreen(55), colors.GetBlue(55), 255),     //poor (R140, G86, B55)
                 new Color32(colors.GetRed(96), colors.GetGreen(96), colors.GetBlue(96), 255),     //temple (R176, G205, B255)
                 new Color32(colors.GetRed(101), colors.GetGreen(101), colors.GetBlue(101), 255),  //cult (R68, G124, B192)
-                new Color32(colors.GetRed(55), colors.GetGreen(55), colors.GetBlue(55), 255),     //tavern (R126, G81, B89)
-                new Color32(colors.GetRed(49), colors.GetGreen(49), colors.GetBlue(49), 255),     //city (R220, G177, B177)
-                new Color32(colors.GetRed(51), colors.GetGreen(51), colors.GetBlue(51), 255),     //hamlet (R188, G138, B138)
-                new Color32(colors.GetRed(53), colors.GetGreen(53), colors.GetBlue(53), 255),     //village (R155, G105, B106)
+                new Color32(colors.GetRed(39), colors.GetGreen(39), colors.GetBlue(39), 255),     //tavern (R126, G81, B89)
+                new Color32(colors.GetRed(33), colors.GetGreen(33), colors.GetBlue(33), 255),     //city (R220, G177, B177)
+                new Color32(colors.GetRed(35), colors.GetGreen(35), colors.GetBlue(35), 255),     //hamlet (R188, G138, B138)
+                new Color32(colors.GetRed(37), colors.GetGreen(37), colors.GetBlue(37), 255),     //village (R155, G105, B106)
             };
 
             identifyFlashColor = new Color32(colors.GetRed(244), colors.GetGreen(244), colors.GetBlue(244), 255); // (R163, G39, B15)
@@ -297,34 +299,55 @@ namespace TediousTravel
             regionTextureOverlayPanel = DaggerfallUI.AddPanel(regionTextureOverlayPanelRect, NativePanel);
             regionTextureOverlayPanel.Enabled = false;
 
+            // Location dots overlay panel
+            regionLocationDotsOverlayPanel = DaggerfallUI.AddPanel(regionTextureOverlayPanelRect, NativePanel);
+            regionLocationDotsOverlayPanel.Enabled = false;
+
             // Current region overly panel
             playerRegionOverlayPanel = DaggerfallUI.AddPanel(playerRegionOverlayPanelRect, NativePanel);
             playerRegionOverlayPanel.Enabled = false;
 
             // Overlay for the region panel
-            regionMapOverlayPanel = DaggerfallUI.AddPanel(regionTextureOverlayPanelRect, NativePanel);
-            regionMapOverlayPanel.Enabled = false;
+            identifyOverlayPanel = DaggerfallUI.AddPanel(regionTextureOverlayPanelRect, NativePanel);
+            identifyOverlayPanel.Enabled = false;
 
-            //borders around the region maps
+            // Borders around the region maps
             borderTexture = DaggerfallUI.GetTextureFromImg(regionBorderImgName);
             borderPanel = DaggerfallUI.AddPanel(new Rect(new Vector2(0, regionTextureOverlayPanelRect.position.y), regionTextureOverlayPanelRect.size), NativePanel);
             borderPanel.BackgroundTexture = borderTexture;
             borderPanel.Enabled = false;
 
+            // Load native overworld texture
+            overworldTexture = ImageReader.GetTexture(overworldImgName);
+            NativePanel.BackgroundTexture = overworldTexture;
+
+            // Setup pixel buffer and texture for region/location identify
+            identifyPixelBuffer = new Color32[(int)regionTextureOverlayPanelRect.width * (int)regionTextureOverlayPanelRect.height];
+            identifyTexture = new Texture2D((int)regionTextureOverlayPanelRect.width, (int)regionTextureOverlayPanelRect.height, TextureFormat.ARGB32, false);
+            identifyTexture.filterMode = FilterMode.Point;
+
+            // Setup pixel buffer and texture for location dots overlay
+            locationDotsPixelBuffer = new Color32[(int)regionTextureOverlayPanelRect.width * (int)regionTextureOverlayPanelRect.height];
+            locationDotsTexture = new Texture2D((int)regionTextureOverlayPanelRect.width, (int)regionTextureOverlayPanelRect.height, TextureFormat.ARGB32, false);
+            locationDotsTexture.filterMode = FilterMode.Point;
+
+            // Load map names for player region
             selectedRegionMapNames = GetRegionMapNames(GetPlayerRegion());
-            loadNewImage = true;
-            draw = true;
+
+            // Identify current region
             StartIdentify();
-        }
+            UpdateIdentifyTextureForPlayerRegion();
+       }
 
         public override void OnPush()
         {
             base.OnPush();
             isShowing = true;
 
-            if (base.IsSetup)
+            if (IsSetup)
             {
-                SetPlayerRegionOverlay();
+                StartIdentify();
+                UpdateIdentifyTextureForPlayerRegion();
                 CloseRegionPanel();
             }
         }
@@ -332,11 +355,11 @@ namespace TediousTravel
         public override void OnPop()
         {
             isShowing = false;
+            base.OnPop();
             findingLocation = false;
             gotoLocation = null;
             distanceRegionName = null;
             distance = null;
-            base.OnPop();
         }
 
         public override void Update()
@@ -360,8 +383,7 @@ namespace TediousTravel
                     CloseWindow();
             }
 
-            //input handling
-
+            // Input handling
             Vector2 currentMousePos = new Vector2((NativePanel.ScaledMousePosition.x), (NativePanel.ScaledMousePosition.y));
 
             if (currentMousePos != lastMousePos)
@@ -375,20 +397,20 @@ namespace TediousTravel
 
             UpdateRegionLabel();
 
-
             if (RegionSelected)
             {
                 if (Input.GetKeyUp(KeyCode.Mouse1))
                 {
+                    // Zoom to mouse position
                     zoomPosition = currentMousePos;
                     zoom = !zoom;
-                    borderPanel.Enabled = !borderPanel.Enabled;
-                    draw = true;
+                    ZoomMapTextures();
                 }
-                else if (Input.GetKey(KeyCode.LeftShift) && zoom)   //scrolling while zoomed in
+                else if ((Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift)) && zoom && NativePanel.MouseOverComponent)
                 {
+                    // Scrolling while zoomed in
                     zoomPosition = currentMousePos;
-                    draw = true;
+                    ZoomMapTextures();
                 }
                 if (Input.GetKeyDown(KeyCode.L))
                 {
@@ -404,70 +426,26 @@ namespace TediousTravel
             }
             else
             {
-
                 if (Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.KeypadEnter))
                 {
                     if (identifying)
                         OpenRegionPanel(GetPlayerRegion());
                 }
-
             }
 
-            if (loadNewImage) //loads image file if true
-            {
-
-                if (RegionSelected)
-                    LoadMapImage(selectedRegionMapNames[mapIndex]);
-                else
-                    LoadMapImage(nativeImgName);
-
-                loadNewImage = false;
-            }
-
-
-            if (draw)    //updates textures if true
-            {
-                SetColorsFromImg();
-
-                if (RegionSelected)
-                {
-                    SetLocationPixels();
-
-                    //draw x-hair over player loc or find result location
-                    if (identifyState)
-                    {
-                        if (FindingLocation)
-                            CreateCrossHair(MapsFile.GetPixelFromPixelID(locationSummary.ID), locationSummary.RegionIndex);
-                        else
-                            CreateCrossHair(GetPlayerMapPosition(), selectedRegion);
-                    }
-
-                    Draw(regionTextureOverlayPanel, regionMapOverlayPanel);
-                }
-                else
-                {
-                    if (identifyState)
-                        SetPlayerRegionOverlay();
-
-                    Draw(NativePanel, playerRegionOverlayPanel);
-                }
-
-                draw = false;
-
-            }
-
-            //identifiying
+            // Show/hide identify panel when identify is running
+            identifyOverlayPanel.Enabled = identifying && identifyState;
             AnimateIdentify();
 
             // If a goto location specified, find it and ask if player wants to travel.
             if (!string.IsNullOrEmpty(gotoLocation))
             {
-                OpenRegionPanel(gotoRegion);
+                mouseOverRegion = gotoRegion;
+                OpenRegionPanel(mouseOverRegion);
+                UpdateRegionLabel();
                 HandleLocationFindEvent(null, gotoLocation);
                 gotoLocation = null;
             }
-
-
         }
 
         #endregion
@@ -485,51 +463,52 @@ namespace TediousTravel
 			findButton = DaggerfallUI.AddButton(new Rect(3, 175, findButtonRect.width, findButtonRect.height), NativePanel);
 			findButton.BackgroundTexture = findButtonTexture;
 			findButton.OnMouseClick += FindlocationButtonClickHandler;
+            findButton.Enabled = false;
 
-			// I'm At button
-			atButton = DaggerfallUI.AddButton(new Rect(3, 186, atButtonRect.width, atButtonRect.height), NativePanel);
+            // I'm At button
+            atButton = DaggerfallUI.AddButton(new Rect(3, 186, atButtonRect.width, atButtonRect.height), NativePanel);
 			atButton.BackgroundTexture = atButtonTexture;
 			atButton.OnMouseClick += AtButtonClickHandler;
 
 			// Dungeons filter button
 			Vector2 dungeonFilterButtonPosition = new Vector2(50, 175);
-			Vector2 dungeonFilterButtonSize = new Vector2(dungeonsFilterButtonSrcRect.width, dungeonsFilterButtonSrcRect.height);
+            Vector2 dungeonFilterButtonSize = new Vector2(dungeonsFilterButtonSrcRect.width, dungeonsFilterButtonSrcRect.height);
 			dungeonsFilterButton = DaggerfallUI.AddButton(dungeonFilterButtonPosition, dungeonFilterButtonSize, NativePanel);
 			dungeonsFilterButton.Name = "dungeonsFilterButton";
 			dungeonsFilterButton.OnMouseClick += FilterButtonClickHandler;
 
-			// Temples filter button
-			Vector2 templeFilterButtonPosition = new Vector2(50, 186);
-			Vector2 templeFilterButtonSize = new Vector2(templesFilterButtonSrcRect.width, templesFilterButtonSrcRect.height);
+            // Temples filter button
+            Vector2 templeFilterButtonPosition = new Vector2(50, 186);
+            Vector2 templeFilterButtonSize = new Vector2(templesFilterButtonSrcRect.width, templesFilterButtonSrcRect.height);
 			templesFilterButton = DaggerfallUI.AddButton(templeFilterButtonPosition, templeFilterButtonSize, NativePanel);
 			templesFilterButton.Name = "templesFilterButton";
 			templesFilterButton.OnMouseClick += FilterButtonClickHandler;
 
-			// Homes filter button
-			Vector2 homesFilterButtonPosition = new Vector2(149, 175);
-			Vector2 homesFilterButtonSize = new Vector2(homesFilterButtonSrcRect.width, homesFilterButtonSrcRect.height);
+            // Homes filter button
+            Vector2 homesFilterButtonPosition = new Vector2(149, 175);
+            Vector2 homesFilterButtonSize = new Vector2(homesFilterButtonSrcRect.width, homesFilterButtonSrcRect.height);
 			homesFilterButton = DaggerfallUI.AddButton(homesFilterButtonPosition, homesFilterButtonSize, NativePanel);
 			homesFilterButton.Name = "homesFilterButton";
 			homesFilterButton.OnMouseClick += FilterButtonClickHandler;
 
-			// Towns filter button
-			Vector2 townsFilterButtonPosition = new Vector2(149, 186);
-			Vector2 townsFilterButtonSize = new Vector2(townsFilterButtonSrcRect.width, townsFilterButtonSrcRect.height);
+            // Towns filter button
+            Vector2 townsFilterButtonPosition = new Vector2(149, 186);
+            Vector2 townsFilterButtonSize = new Vector2(townsFilterButtonSrcRect.width, townsFilterButtonSrcRect.height);
 			townsFilterButton = DaggerfallUI.AddButton(townsFilterButtonPosition, townsFilterButtonSize, NativePanel);
 			townsFilterButton.Name = "townsFilterButton";
 			townsFilterButton.OnMouseClick += FilterButtonClickHandler;
 
-			// Horizontal arrow button
-			Vector2 horizontalArrowButtonPosition = new Vector2(231, 176);
-			Vector2 horizontalArrowButtonSize = new Vector2(22, 20);
+            // Horizontal arrow button
+            Vector2 horizontalArrowButtonPosition = new Vector2(231, 176);
+            Vector2 horizontalArrowButtonSize = new Vector2(22, 20);
 			horizontalArrowButton = DaggerfallUI.AddButton(horizontalArrowButtonPosition, horizontalArrowButtonSize, NativePanel);
 			horizontalArrowButton.Enabled = false;
 			horizontalArrowButton.Name = "horizontalArrowButton";
 			horizontalArrowButton.OnMouseClick += ArrowButtonClickHandler;
 
-			// Vertical arrow button
-			Vector2 verticalArrowButtonPosition = new Vector2(254, 176);
-			Vector2 verticalArrowButtonSize = new Vector2(22, 20);
+            // Vertical arrow button
+            Vector2 verticalArrowButtonPosition = new Vector2(254, 176);
+            Vector2 verticalArrowButtonSize = new Vector2(22, 20);
 			verticalArrowButton = DaggerfallUI.AddButton(verticalArrowButtonPosition, verticalArrowButtonSize, NativePanel);
 			verticalArrowButton.Enabled = false;
 			verticalArrowButton.Name = "verticalArrowButton";
@@ -600,235 +579,11 @@ namespace TediousTravel
             atButtonTexture = ImageReader.GetTexture(findAtButtonImgName);
             atButtonTexture = ImageReader.GetSubTexture(atButtonTexture, atButtonRect, buttonsFullSize);
 
-
             // Arrows
-            upArrowTexture      = ImageReader.GetTexture(upArrowImgName);//DaggerfallUI.GetTextureFromImg(upArrowImgName);
-            downArrowTexture    = ImageReader.GetTexture(downArrowImgName);//DaggerfallUI.GetTextureFromImg(downArrowImgName);
-            leftArrowTexture    = ImageReader.GetTexture(leftArrowImgName);//DaggerfallUI.GetTextureFromImg(leftArrowImgName);
-            rightArrowTexture   = ImageReader.GetTexture(rightArrowImgName);//DaggerfallUI.GetTextureFromImg(rightArrowImgName);
-
-            UnityEngine.Object.Destroy(baselocationFilterButtonEnabledText);
-            UnityEngine.Object.Destroy(baselocationFilterButtonDisabledText);
-        }
-
-        //loads img file
-        void LoadMapImage(string name)
-        {
-            if (string.IsNullOrEmpty(name))
-            {
-                Debug.LogWarning("LoadMapImage found name null or empty - defaulting to region selection map");
-                name = nativeImgName;
-            }
-            loadedImg = new ImgFile(Path.Combine(DaggerfallUnity.Instance.Arena2Path, name), FileUsage.UseMemory, true);
-            loadedImg.LoadPalette(Path.Combine(DaggerfallUnity.Instance.Arena2Path, loadedImg.PaletteName));
-            width = loadedImg.GetDFBitmap().Width;
-            height = loadedImg.GetDFBitmap().Height;
-        }
-
-        //fills buffer w/ colors from current loaded img
-        void SetColorsFromImg()
-        {
-            if (loadedImg == null)
-            {
-                Debug.LogWarning("SetColors() imgFile was null");
-                return;
-            }
-            if (pixelBuffer == null)
-            {
-                DFBitmap bitmap = loadedImg.GetDFBitmap();
-                pixelBuffer = new Color32[bitmap.Width * bitmap.Height];
-            }
-
-            loadedImg.LoadPalette(Path.Combine(DaggerfallUnity.Instance.Arena2Path, loadedImg.PaletteName));
-            pixelBuffer = loadedImg.GetColor32(loadedImg.GetDFBitmap(), 0);
-            overlayPixelBuffer = new Color32[pixelBuffer.Length];
-        }
-
-        void CreateCrossHair(DFPosition pos, int regionIndex = -1)
-        {
-            if (regionIndex == -1)
-                regionIndex = GetPlayerRegion();
-            CreateCrossHair(pos.X, pos.Y, regionIndex);
-        }
-
-        /// <summary>
-        /// sets up crosshair texture & panel used to by "at" and "find buttons
-        /// </summary>
-        /// <param name="mapPixelX"></param>
-        /// <param name="mapPixelY"></param>
-        void CreateCrossHair(int mapPixelX, int mapPixelY, int regionIndex)
-        {
-            if (RegionSelected == false)
-                return;
-            try
-            {
-                string mapName = selectedRegionMapNames[mapIndex];
-                Vector2 origin = offsetLookup[mapName];
-                float scale = GetRegionMapScale(regionIndex);
-
-                // Manually adjust Betony vertical offset
-                int yAdjust = 0;
-                if (regionIndex == betonyIndex)
-                    yAdjust = -477;
-
-                int scaledX = (int)((mapPixelX - origin.x) * scale);
-                int scaledY = (int)((mapPixelY - origin.y) * scale) + regionPanelOffset + yAdjust;
-
-                if (overlayPixelBuffer == null)
-                {
-                    Debug.LogWarning("CreateCrosshair() found pixelBuffer null");
-                    return;
-                }
-
-                for (int x = 0; x < width; x++)
-                {
-                    for (int y = 0; y < height; y++)
-                    {
-                        if (x == scaledX || y + regionPanelOffset == scaledY)
-                        {
-                            overlayPixelBuffer[(height - y - 1) * width + x] = identifyFlashColor;
-                        }
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                Debug.LogError(ex.Message);
-            }
-        }
-
-        // Creates the region overlay for current player region
-        void SetPlayerRegionOverlay()
-        {
-            try
-            {
-                // Player must be inside a valid region
-                int playerRegion = GetPlayerRegion();
-                if (playerRegion == -1)
-                    return;
-
-                if (regionPickerBitmap == null)
-                    regionPickerBitmap = DaggerfallUI.GetImgBitmap(regionPickerImgName);
-
-                // Create a texture map overlay for the region area
-                int width = regionPickerBitmap.Width;
-                int height = regionPickerBitmap.Height;
-                overlayPixelBuffer = new Color32[width * height];
-
-                // note by Nystul: check necessary to prevent exception which could happen if pixelBuffer is 320x160 instead of 320x200 -
-                // otherwise marked line below will throw exception (e.g. after fast travel to a location in Wrothgarian Mountains and reopening map)
-                // not sure why this happens, but it happens, maybe Lypyl can take a look
-                if (overlayPixelBuffer.GetLength(0) != width * height)
-                    return;
-
-                for (int y = 0; y < height; y++)
-                {
-                    for (int x = 0; x < width; x++)
-                    {
-                        int srcOffset = y * width + x;
-                        int dstOffset = ((height - y - 1) * width) + x;
-                        int sampleRegion = regionPickerBitmap.Data[srcOffset] - 128;
-                        if (sampleRegion == playerRegion)
-                            overlayPixelBuffer[dstOffset] = identifyFlashColor; // this is the line that might throw exception sometimes
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                Debug.LogError(string.Format("{0}\n{1}", ex.TargetSite, ex.Message));
-                return;
-            }
-        }
-
-        void Draw(Panel target, Panel targetOverlay, Texture2D texture = null)
-        {
-            if (target == null)
-                return;
-
-            if (texture != null)
-                UnityEngine.Object.Destroy(texture);
-
-            if (pixelBuffer.Length != (width * height))
-            {
-                Debug.LogError(string.Format("DrawToPanel() - pixel buffer invalid size {0} {1} {2} {3}", loadedImg.FileName, RegionSelected, pixelBuffer.Length, (width * height)));
-                SetColorsFromImg();
-            }
-
-            // Make base texture     
-            if (!TextureReplacement.TryImportImage(RegionSelected ? selectedRegionMapNames[mapIndex] : nativeImgName, false, out texture))
-            {
-                texture = new Texture2D(width, height, TextureFormat.ARGB32, false);
-                texture.SetPixels32(pixelBuffer);
-            }
-
-            // Make overlay texture
-            Texture2D overlay = null;
-            if (RegionSelected || identifyState)
-            {
-                if (!RegionSelected)
-                {
-                    // Import map overlays named TRAV0I00.IMG-RegionName (ex: TRAV0I00.IMG-Ilessan Hills)
-                    int region = GetPlayerRegion();
-                    if (region != -1 &&
-                        !importedOverlays.TryGetValue(region, out overlay) &&
-                        TextureReplacement.TryImportImage(string.Format("{0}-{1}", nativeImgName, GetRegionName(region)), false, out overlay))
-                        importedOverlays[region] = overlay;
-                }
-
-                if (!overlay)
-                {
-                    overlay = new Texture2D(width, height, TextureFormat.ARGB32, false);
-                    overlay.SetPixels32(overlayPixelBuffer);
-                }
-            }
-
-
-            if (RegionSelected && zoom)
-            {
-                //center cropped porition over mouse
-                int zoomWidth = width / (zoomfactor * 2);
-                int zoomHeight = height / (zoomfactor * 2);
-                int startX = (int)zoomPosition.x - zoomWidth;
-                int startY = (int)(height + (-zoomPosition.y - zoomHeight)) + regionPanelOffset;
-
-                if (startX < 0)
-                {
-                    startX = 0;
-                }
-                else if (startX + width / zoomfactor >= width)
-                {
-                    startX = width - width / zoomfactor;
-                }
-                if (startY < 0)
-                {
-                    startY = 0;
-                }
-                else if (startY + height / zoomfactor >= height)
-                {
-                    startY = height - height / zoomfactor;
-                }
-
-                zoomOffset = new Vector2(startX, startY);
-
-                DFSize srcSize = new DFSize(width, height);
-                Rect subRect = new Rect(startX, height - startY - height / zoomfactor, width / zoomfactor, height / zoomfactor);
-
-                texture = ImageReader.GetSubTexture(texture, subRect, srcSize);
-                if (overlay)
-                    overlay = ImageReader.GetSubTexture(overlay, subRect, srcSize);
-            }
-
-            texture.filterMode = filterMode;
-            texture.Apply();
-            target.BackgroundTexture = texture;
-
-            if (targetOverlay.Enabled = overlay)
-            {
-                overlay.filterMode = filterMode;
-                overlay.Apply();
-                targetOverlay.BackgroundTexture = overlay;
-            }
-
+            upArrowTexture      = ImageReader.GetTexture(upArrowImgName);
+            downArrowTexture    = ImageReader.GetTexture(downArrowImgName);
+            leftArrowTexture    = ImageReader.GetTexture(leftArrowImgName);
+            rightArrowTexture   = ImageReader.GetTexture(rightArrowImgName);
         }
 
         // Populates offset dictionary for aligning top-left of map to map pixel coordinates.
@@ -888,18 +643,261 @@ namespace TediousTravel
             offsetLookup.Add("FMAP0I60.IMG", new Vector2(107, 11));
             offsetLookup.Add("FMAP0I61.IMG", new Vector2(255, 275));    // Cybiades
         }
+        #endregion
+
+        #region Map Texture Management
+
+        // Called when a region is selected
+        void UpdateMapTextures()
+        {
+            // Region must be selected
+            if (!RegionSelected)
+                return;
+
+            // Cached region texture if not available
+            string mapName = selectedRegionMapNames[mapIndex];
+            if (!regionTextures.ContainsKey(mapName))
+            {
+                Texture2D regionTextureOut;
+                if (!TextureReplacement.TryImportImage(selectedRegionMapNames[mapIndex], false, out regionTextureOut))
+                    regionTextureOut = ImageReader.GetTexture(mapName);
+                regionTextures.Add(mapName, regionTextureOut);
+            }
+
+            // Present region and locations
+            regionTextureOverlayPanel.BackgroundTexture = regionTextures[mapName];
+            UpdateMapLocationDotsTexture();
+        }
+
+        // Updates location dots
+        void UpdateMapLocationDotsTexture()
+        {
+            // Get map and dimensions
+            string mapName = selectedRegionMapNames[mapIndex];
+            Vector2 origin = offsetLookup[mapName];
+            int originX = (int)origin.x;
+            int originY = (int)origin.y;
+            int width = (int)regionTextureOverlayPanelRect.width;
+            int height = (int)regionTextureOverlayPanelRect.height;
+
+            // Plot locations to color array
+            scale = GetRegionMapScale(selectedRegion);
+            Array.Clear(locationDotsPixelBuffer, 0, locationDotsPixelBuffer.Length);
+            for (int y = 0; y < height; y++)
+            {
+                for (int x = 0; x < width; x++)
+                {
+                    int offset = (int)((((height - y - 1) * width) + x) * scale);
+                    if (offset >= (width * height))
+                        continue;
+                    int sampleRegion = DaggerfallUnity.Instance.ContentReader.MapFileReader.GetPoliticIndex(originX + x, originY + y) - 128;
+
+                    // Set location pixel if inside region area
+                    if (sampleRegion == selectedRegion)
+                    {
+                        ContentReader.MapSummary summary;
+                        if (DaggerfallUnity.Instance.ContentReader.HasLocation(originX + x, originY + y, out summary))
+                        {
+                            if (!checkLocationDiscovered(summary))
+                                continue;
+
+                            int index = GetPixelColorIndex(summary.LocationType);
+                            if (index == -1)
+                                continue;
+                            else if (portsFilter && !tediousData.IsPortTown(summary.RegionIndex, summary.MapIndex))
+                                continue;
+                            else
+                                locationDotsPixelBuffer[offset] = locationPixelColors[index];
+                        }
+                    }
+                }
+            }
+
+            // Apply updated color array to texture
+            locationDotsTexture.SetPixels32(locationDotsPixelBuffer);
+            locationDotsTexture.Apply();
+
+            // Present texture
+            regionLocationDotsOverlayPanel.BackgroundTexture = locationDotsTexture;
+        }
+
+        // Zoom and pan region texture
+        void ZoomMapTextures()
+        {
+            // Exit cropped rendering
+            if (!RegionSelected || !zoom)
+            {
+                regionTextureOverlayPanel.BackgroundTextureLayout = BackgroundLayout.StretchToFill;
+                regionLocationDotsOverlayPanel.BackgroundTextureLayout = BackgroundLayout.StretchToFill;
+                identifyOverlayPanel.BackgroundTextureLayout = BackgroundLayout.StretchToFill;
+                UpdateBorder();
+                return;
+            }
+
+            // Get current region texture
+            Texture2D regionTexture;
+            if (!regionTextures.TryGetValue(selectedRegionMapNames[mapIndex], out regionTexture))
+                return;
+
+            // Centre cropped porition over mouse using classic dimensions
+            int width = (int)regionTextureOverlayPanelRect.width;
+            int height = (int)regionTextureOverlayPanelRect.height;
+            int zoomWidth = width / (zoomfactor * 2);
+            int zoomHeight = height / (zoomfactor * 2);
+            int startX = (int)zoomPosition.x - zoomWidth;
+            int startY = (int)(height + (-zoomPosition.y - zoomHeight)) + regionPanelOffset;
+
+            // Clamp to edges
+            if (startX < 0)
+                startX = 0;
+            else if (startX + width / zoomfactor >= width)
+                startX = width - width / zoomfactor;
+            if (startY < 0)
+                startY = 0;
+            else if (startY + height / zoomfactor >= height)
+                startY = height - height / zoomfactor;
+
+            zoomOffset = new Vector2(startX, startY);
+
+            // Set cropped area in region texture - can be a replacement texture so need to determine ratio compared to classic
+            float ratioX = regionTexture.width / (float)width;
+            float ratioY = regionTexture.height / (float)height;
+            regionTextureOverlayPanel.BackgroundTextureLayout = BackgroundLayout.Cropped;
+            regionTextureOverlayPanel.BackgroundCroppedRect = new Rect(startX * ratioX, startY * ratioY, width / zoomfactor * ratioX, height / zoomfactor * ratioY);
+
+            // Set cropped area in location dots panel - always at classic dimensions            
+            regionLocationDotsOverlayPanel.BackgroundTextureLayout = BackgroundLayout.Cropped;
+            regionLocationDotsOverlayPanel.BackgroundCroppedRect = new Rect(startX, startY, width / zoomfactor, height / zoomfactor);
+
+            // Set cropped area in identify panel - always at classic dimensions
+            // This ensures zoomed crosshair pans with location dots panel
+            identifyOverlayPanel.BackgroundTextureLayout = BackgroundLayout.Cropped;
+            identifyOverlayPanel.BackgroundCroppedRect = regionLocationDotsOverlayPanel.BackgroundCroppedRect;
+
+            UpdateBorder();
+        }
+
+        // Show/hide map borders based on state
+        void UpdateBorder()
+        {
+            borderPanel.Enabled = (RegionSelected && !zoom);
+        }
+
+        // Set region block for identify overlay
+        void UpdateIdentifyTextureForPlayerRegion()
+        {
+            // Only for overworld map
+            if (RegionSelected)
+                return;
+
+            // Player must be inside a valid region
+            int playerRegion = GetPlayerRegion();
+            if (playerRegion == -1)
+                return;
+
+            // Clear existing pixel buffer
+            Array.Clear(identifyPixelBuffer, 0, identifyPixelBuffer.Length);
+
+            // Import custom map overlays named TRAV0I00.IMG-RegionName (ex: TRAV0I00.IMG-Ilessan Hills)
+            if (!importedOverlays.TryGetValue(playerRegion, out customRegionOverlayTexture) &&
+                TextureReplacement.TryImportImage(string.Format("{0}-{1}", overworldImgName, GetRegionName(playerRegion)), false, out customRegionOverlayTexture))
+                importedOverlays[playerRegion] = customRegionOverlayTexture;
+            else
+                customRegionOverlayTexture = null;
+
+            // Nothing more to do if a custom region overlay has been set
+            if (customRegionOverlayTexture)
+                return;
+
+            // Region shape is filled from picker bitmap, so this has to be open
+            if (regionPickerBitmap == null)
+                regionPickerBitmap = DaggerfallUI.GetImgBitmap(regionPickerImgName);
+
+            // Create a texture overlay for the region area
+            int width = regionPickerBitmap.Width;
+            int height = regionPickerBitmap.Height;
+            int pickerOverlayPanelHeightDifference = height - (int)regionTextureOverlayPanelRect.height - regionPanelOffset + 1;
+            for (int y = 0; y < height; y++)
+            {
+                for (int x = 0; x < width; x++)
+                {
+                    int srcOffset = y * width + x;
+                    int dstOffset = ((height - y - pickerOverlayPanelHeightDifference) * width) + x;
+                    int sampleRegion = regionPickerBitmap.Data[srcOffset] - 128;
+                    if (sampleRegion == playerRegion)
+                        identifyPixelBuffer[dstOffset] = identifyFlashColor;
+                }
+            }
+            identifyTexture.SetPixels32(identifyPixelBuffer);
+            identifyTexture.Apply();
+            identifyOverlayPanel.BackgroundTexture = identifyTexture;
+        }
+
+        void UpdateCrosshair()
+        {
+            if (FindingLocation)
+                UpdateIdentifyTextureForPosition(MapsFile.GetPixelFromPixelID(locationSummary.ID), locationSummary.RegionIndex);
+            else
+                UpdateIdentifyTextureForPosition(TravelTimeCalculator.GetPlayerTravelPosition(), selectedRegion);
+        }
+
+        void UpdateIdentifyTextureForPosition(DFPosition pos, int regionIndex = -1)
+        {
+            if (regionIndex == -1)
+                regionIndex = GetPlayerRegion();
+            UpdateIdentifyTextureForPosition(pos.X, pos.Y, regionIndex);
+        }
+
+        // Set location crosshair for identify overlay
+        void UpdateIdentifyTextureForPosition(int mapPixelX, int mapPixelY, int regionIndex)
+        {
+            // Only for regions
+            if (!RegionSelected)
+                return;
+
+            // Clear existing pixel buffer
+            Array.Clear(identifyPixelBuffer, 0, identifyPixelBuffer.Length);
+
+            string mapName = selectedRegionMapNames[mapIndex];
+            Vector2 origin = offsetLookup[mapName];
+            float scale = GetRegionMapScale(regionIndex);
+
+            // Manually adjust Betony vertical offset
+            int yAdjust = 0;
+            if (regionIndex == betonyIndex)
+                yAdjust = -477;
+
+            int scaledX = (int)((mapPixelX - origin.x) * scale);
+            int scaledY = (int)((mapPixelY - origin.y) * scale) + regionPanelOffset + yAdjust;
+
+            int width = (int)regionTextureOverlayPanelRect.width;
+            int height = (int)regionTextureOverlayPanelRect.height;
+            for (int x = 0; x < width; x++)
+            {
+                for (int y = 0; y < height; y++)
+                {
+                    if (x == scaledX || y + regionPanelOffset == scaledY)
+                    {
+                        identifyPixelBuffer[(height - y - 1) * width + x] = identifyFlashColor;
+                    }
+                }
+            }
+            identifyTexture.SetPixels32(identifyPixelBuffer);
+            identifyTexture.Apply();
+            identifyOverlayPanel.BackgroundTexture = identifyTexture;
+        }
 
         #endregion
 
-
         #region Event Handlers
 
-        // Handle clicks on the main panel.
+        // Handle clicks on the main panel
         void ClickHandler(BaseScreenComponent sender, Vector2 position)
         {
             position.y -= regionPanelOffset;
 
-            if (position.x < 0 || position.x > regionTextureOverlayPanelRect.width || position.y < 0 || position.y > regionTextureOverlayPanelRect.height) //make sure clicks are inside region texture
+            // Ensure clicks are inside region texture
+            if (position.x < 0 || position.x > regionTextureOverlayPanelRect.width || position.y < 0 || position.y > regionTextureOverlayPanelRect.height)
                 return;
 
             if (RegionSelected == false)
@@ -912,12 +910,13 @@ namespace TediousTravel
                 if (FindingLocation)
                     StopIdentify(true);
                 else
-                {
                     CreateConfirmTravelWindow();
-                }
             }
-            else if (MouseOverOtherRegion)      //if clicked while mouse over other region & not a location, switch to that region
+            else if (MouseOverOtherRegion)
+            {
+                // If clicked while mouse over other region & not a location, switch to that region
                 OpenRegionPanel(mouseOverRegion);
+            }
         }
 
         void ExitButtonClickHandler(BaseScreenComponent sender, Vector2 position)
@@ -929,19 +928,15 @@ namespace TediousTravel
         {
             // Identify region or map location
             findingLocation = false;
-            if (RegionSelected == false)
-                StartIdentify();
-            else
-                StartIdentify();
+            StartIdentify();
+            UpdateCrosshair();
         }
 
         void FindlocationButtonClickHandler(BaseScreenComponent sender, Vector2 position)
         {
-            if (RegionSelected == false)           // Do nothing
-                return;
-            else                                // Open find location pop-up
+            // Open find location pop-up
+            if (RegionSelected)
             {
-                //StopIdentify();
                 DaggerfallInputMessageBox findPopUp = new DaggerfallInputMessageBox(uiManager, null, 31, HardStrings.findLocationPrompt, true, this);
                 findPopUp.TextPanelDistanceY = 5;
                 findPopUp.TextBox.WidthOverride = 308;
@@ -951,7 +946,7 @@ namespace TediousTravel
             }
         }
 
-         /// <summary>
+        /// <summary>
         /// Handles click events for the arrow buttons in the region view
         /// </summary>
         /// <param name="sender"></param>
@@ -983,8 +978,7 @@ namespace TediousTravel
 
             mapIndex = newIndex;
             SetupArrowButtons();
-            loadNewImage = true;
-            draw = true;
+            UpdateMapTextures();
         }
 
         void PortButtonClickHandler(BaseScreenComponent sender, Vector2 position)
@@ -1066,14 +1060,14 @@ namespace TediousTravel
             else
                 townsFilterButton.BackgroundTexture = townsFilterButtonEnabled;
 
-            draw = true;
+            UpdateMapLocationDotsTexture();
         }
 
         #endregion
 
         #region Methods
 
-        // Open region panel
+        // Set selected region and open region panel
         void OpenRegionPanel(int region)
         {
             string[] mapNames = GetRegionMapNames(region);
@@ -1084,18 +1078,16 @@ namespace TediousTravel
             selectedRegion = region;
             selectedRegionMapNames = mapNames;
             regionTextureOverlayPanel.Enabled = true;
+            regionLocationDotsOverlayPanel.Enabled = true;
             portButton.Enabled = false;
-            borderPanel.Enabled = true;
-            playerRegionOverlayPanel.Enabled = false;
-            regionMapOverlayPanel.Enabled = true;
-            pixelBuffer = null;
-            overlayPixelBuffer = null;
-            loadNewImage = true;
-            draw = true;
             findButton.Enabled = true;
+            findingLocation = false;
             currentDFRegion = DaggerfallUnity.ContentReader.MapFileReader.GetRegion(region);
-            StartIdentify();
             SetupArrowButtons();
+            UpdateMapTextures();
+            UpdateBorder();
+            StartIdentify();
+            UpdateCrosshair();
         }
 
         // Close region panel and reset values
@@ -1106,22 +1098,18 @@ namespace TediousTravel
             locationSelected = false;
             mapIndex = 0;
             regionTextureOverlayPanel.Enabled = false;
+            regionLocationDotsOverlayPanel.Enabled = false;
             portButton.Enabled = true;
-            borderPanel.Enabled = false;
-            playerRegionOverlayPanel.Enabled = true;
-            regionMapOverlayPanel.Enabled = false;
             horizontalArrowButton.Enabled = false;
             verticalArrowButton.Enabled = false;
             findButton.Enabled = false;
-            loadNewImage = true;
-            draw = true;
             zoom = false;
-            pixelBuffer = null;
-            overlayPixelBuffer = null;
+            ZoomMapTextures();
             StartIdentify();
+            UpdateIdentifyTextureForPlayerRegion();
         }
 
-        // checks if location with MapSummary summary is already discovered
+        // Check if location with MapSummary summary is already discovered
         bool checkLocationDiscovered(ContentReader.MapSummary summary)
         {
             if (GameManager.Instance.PlayerGPS.HasDiscoveredLocation(summary.ID) ||
@@ -1132,7 +1120,6 @@ namespace TediousTravel
             }
             return false;
         }
-
 
         // Check if place is discovered, so it can be found on map.
         public bool CanFindPlace(string regionName, string name)
@@ -1148,69 +1135,11 @@ namespace TediousTravel
             return false;
         }
 
-        // Sets pixels for selected region
-        void SetLocationPixels()
-        {
-            try
-            {
-                if (overlayPixelBuffer == null || overlayPixelBuffer.Length != (width * height))
-                {
-                    Debug.LogError("invalid pixelBuffer in SetLocationPixels()");
-                    return;
-                }
-
-                string mapName = selectedRegionMapNames[mapIndex];
-                Vector2 origin = offsetLookup[mapName];
-                int originX = (int)origin.x;
-                int originY = (int)origin.y;
-
-                // Find locations within this region
-
-                scale = GetRegionMapScale(selectedRegion);
-
-                for (int y = 0; y < height; y++)
-                {
-                    for (int x = 0; x < width; x++)
-                    {
-                        int offset = (int)((((height - y - 1) * width) + x) * scale);
-                        if (offset >= (width * height))
-                            continue;
-                        int sampleRegion = DaggerfallUnity.Instance.ContentReader.MapFileReader.GetPoliticIndex(originX + x, originY + y) - 128;
-
-                        // Set location pixel if inside region area
-                        if (sampleRegion == selectedRegion)
-                        {
-                            ContentReader.MapSummary summary;
-                            if (DaggerfallUnity.Instance.ContentReader.HasLocation(originX + x, originY + y, out summary))
-                            {
-                                if (!checkLocationDiscovered(summary))
-                                    continue;
-
-                                int index = GetPixelColorIndex(summary.LocationType);
-                                if (index == -1)
-                                    continue;
-
-                                else if (portsFilter && !tediousData.IsPortTown(summary.RegionIndex, summary.MapIndex))
-                                    continue;
-
-                                else
-                                    overlayPixelBuffer[offset] = locationPixelColors[index];
-                            }
-                        }
-
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                Debug.LogError(string.Format("{0}\n{1}", ex.TargetSite, ex.Message));
-            }
-        }
-
         Vector2 GetCoordinates()
         {
             string mapName = selectedRegionMapNames[mapIndex];
             Vector2 origin = offsetLookup[mapName];
+            int height = (int)regionTextureOverlayPanelRect.height;
 
             Vector2 results = Vector2.zero;
             Vector2 pos = regionTextureOverlayPanel.ScaledMousePosition;
@@ -1227,13 +1156,11 @@ namespace TediousTravel
                 results.y = (int)Math.Floor(origin.y + pos.y);
             }
 
-            //coordsLabel.Text = string.Format("{0}, {1}", results.x, results.y);
-
             return results;
         }
 
 
-        //checks if player mouse over valid location while region selected & not finding location
+        // Check if player mouse over valid location while region selected & not finding location
         void UpdateMouseOverLocation()
         {
             if (RegionSelected == false || FindingLocation)
@@ -1242,7 +1169,10 @@ namespace TediousTravel
             locationSelected = false;
             mouseOverRegion = selectedRegion;
 
-            if (lastMousePos.x < 0 || lastMousePos.x > regionTextureOverlayPanelRect.width || lastMousePos.y < regionPanelOffset || lastMousePos.y > regionTextureOverlayPanel.Size.y + regionPanelOffset)
+            if (lastMousePos.x < 0 ||
+                lastMousePos.x > regionTextureOverlayPanelRect.width ||
+                lastMousePos.y < regionPanelOffset ||
+                lastMousePos.y > regionTextureOverlayPanel.Size.y + regionPanelOffset)
                 return;
 
             float scale = GetRegionMapScale(selectedRegion);
@@ -1250,15 +1180,15 @@ namespace TediousTravel
             int x = (int)(coordinates.x / scale);
             int y = (int)(coordinates.y / scale);
 
-            if (selectedRegion == betonyIndex) // Manually correct Betony offset
+            if (selectedRegion == betonyIndex)      // Manually correct Betony offset
             {
                 x += 60;
                 y += 212;
             }
 
-            if (selectedRegion == 61) // Fix for Cybiades zoom-in map. Map is more zoomed in than for other regions but the pixel coordinates are not scaled to match.
-                                      // The upper right corner of Cybiades (about x=440 y=340) is the same for both Cybiades's zoomed-in map and Sentinel's less zoomed in map,
-                                      // so that is being used as the base for this fix.
+            if (selectedRegion == 61)               // Fix for Cybiades zoom-in map. Map is more zoomed in than for other regions but the pixel coordinates are not scaled to match.
+                                                    // The upper right corner of Cybiades (about x=440 y=340) is the same for both Cybiades's zoomed-in map and Sentinel's less zoomed in map,
+                                                    // so that is being used as the base for this fix.
             {
                 int xDiff = x - 440;
                 int yDiff = y - 340;
@@ -1288,7 +1218,7 @@ namespace TediousTravel
                     if (index == -1)
                         return;
 
-                    // only make location selectable if it is already discovered
+                    // Only make location selectable if it is already discovered
                     if (!checkLocationDiscovered(locationSummary))
                         return;
 
@@ -1352,7 +1282,7 @@ namespace TediousTravel
         {
             if (RegionSelected == false || forceClose)
                 CloseWindow();
-            else            // Close region panel
+            else
                 CloseRegionPanel();
         }
 
@@ -1637,7 +1567,7 @@ namespace TediousTravel
 
         public void SetTravelMapFromSaveData(TravelMapSaveData data)
         {
-            //if doesn't have save data, use defaults
+            // If doesn't have save data, use defaults
             if (data == null)
                 data = new TravelMapSaveData();
 
@@ -1648,12 +1578,12 @@ namespace TediousTravel
             UpdateSearchButtons();
         }
 
-            #endregion
+        #endregion
 
-            #region Helper Methods
+        #region Helper Methods
 
-            //returns index to locationPixelColor array or -1 if invalid or filtered
-            int GetPixelColorIndex(DFRegion.LocationTypes locationType)
+        // Get index to locationPixelColor array or -1 if invalid or filtered
+        int GetPixelColorIndex(DFRegion.LocationTypes locationType)
         {
             int index = -1;
             switch (locationType)
@@ -1729,6 +1659,7 @@ namespace TediousTravel
                     locationSelected = true;
                     findingLocation = true;
                     StartIdentify();
+                    UpdateCrosshair();
                 }
                 else
                 {
@@ -1765,7 +1696,6 @@ namespace TediousTravel
             DistanceMatch[] bestMatches = distance.FindBestMatches(name, maxMatchingResults);
 
             // Check if selected locations actually exist/are visible
-
             MatchesCutOff cutoff = null;
             ContentReader.MapSummary findLocationSummary;
 
@@ -1821,8 +1751,8 @@ namespace TediousTravel
             }
         }
 
-        //creates a ListPickerWindow with a list of locations from current region
-        //locations displayed will be filtered out depending on the dungeon / town / temple / home button settings
+        // Creates a ListPickerWindow with a list of locations from current region
+        // Locations displayed will be filtered out depending on the dungeon / town / temple / home button settings
         private void ShowLocationPicker(string[] locations, bool applyFilters)
         {
             DaggerfallListPickerWindow locationPicker = new DaggerfallListPickerWindow(uiManager, this);
@@ -1897,7 +1827,7 @@ namespace TediousTravel
         // Gets scale of region map
         float GetRegionMapScale(int region)
         {
-            if (region == betonyIndex)//betony
+            if (region == betonyIndex)
                 return 4f;
             else
                 return 1;
@@ -1913,14 +1843,13 @@ namespace TediousTravel
         // Start region identification & location crosshair
         void StartIdentify()
         {
-            var oldFindingLocation = findingLocation;
-            if (identifying)//stop animation
+            // Stop animation
+            if (identifying)
                 StopIdentify(false);
             identifying = true;
             identifyState = false;
             identifyChanges = 0;
             identifyLastChangeTime = 0;
-            findingLocation = oldFindingLocation;
         }
 
         // Stop region identification & location crosshair
@@ -1933,18 +1862,13 @@ namespace TediousTravel
             identifyState = false;
             identifyChanges = 0;
             identifyLastChangeTime = 0;
-            findingLocation = false;
         }
 
         // Animate region identification & location crosshair
         void AnimateIdentify()
         {
             if (!identifying)
-            {
                 return;
-            }
-            //redraw texture while animating
-            draw = true;
 
             // Check if enough time has elapsed since last flash and toggle state
             bool lastIdentifyState = identifyState;
@@ -1966,6 +1890,7 @@ namespace TediousTravel
                 }
             }
         }
+
 
         #endregion
 
@@ -2068,6 +1993,5 @@ namespace TediousTravel
         }
 
         #endregion
-
     }
 }
