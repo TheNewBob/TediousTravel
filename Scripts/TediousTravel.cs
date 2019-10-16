@@ -16,6 +16,7 @@ using DaggerfallWorkshop.Game.Utility;
 using DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings;
 using DaggerfallWorkshop.Game.Entity;
 using DaggerfallWorkshop.Game.Weather;
+using DaggerfallWorkshop.Game.MagicAndEffects.MagicEffects;
 
 namespace TediousTravel
 {
@@ -44,6 +45,7 @@ namespace TediousTravel
         private uint delayCombatTime;
         private GameObject rain;
         private GameObject snow;
+        private int diseaseCount = 0;
 
 		public static Mod mod;
 
@@ -190,6 +192,19 @@ namespace TediousTravel
                     if (DaggerfallUnity.Instance.WorldTime.Now.ToClassicDaggerfallTime() >= delayCombatTime)
                         delayCombat = false;
                 }
+                var currentDiseaseCount = GameManager.Instance.PlayerEffectManager.DiseaseCount;
+
+                // check for diseases.
+                if (currentDiseaseCount != diseaseCount)
+                {
+                    if (currentDiseaseCount > diseaseCount)
+                    {
+                        Debug.Log("detected new disease, interrupting fast travel!");
+                        InterruptFastTravel();
+                        DaggerfallUI.Instance.CreateHealthStatusBox(DaggerfallUI.Instance.UserInterfaceManager.TopWindow).Show();
+                    }
+                    diseaseCount = currentDiseaseCount;
+                }
             }
         }
 
@@ -262,6 +277,8 @@ namespace TediousTravel
             DisableAnnoyingSounds();
             DisableWeather();
             SetTimeScale(travelUi.TimeCompressionSetting);
+            diseaseCount = GameManager.Instance.PlayerEffectManager.DiseaseCount;
+
             Debug.Log("started tedious travel");
         }
 
