@@ -73,9 +73,9 @@ namespace TediousTravel
          */
         public void GeneratePortTownData(string dataPath)
         {
-            if (!File.Exists(Application.dataPath + dataPath))
+            if (!File.Exists(dataPath))
             {
-                System.IO.Directory.CreateDirectory(Application.dataPath + dataPath);
+                System.IO.Directory.CreateDirectory(dataPath);
             }
             DaggerfallUI.Instance.DaggerfallHUD.SetMidScreenText("Tedious data export complete. This won't be necessary in the future...");
 
@@ -106,7 +106,7 @@ namespace TediousTravel
             AddAditionalPortTowns(portTowns);
             Debug.Log("number of port towns: " + portTowns.locations.Count);
             var serializer = new XmlSerializer(typeof(PortTowns));
-            var stream = new FileStream(Application.dataPath + dataPath + PORTTOWNS_FILE, FileMode.CreateNew);
+            var stream = new FileStream(dataPath + "//" + PORTTOWNS_FILE, FileMode.CreateNew);
             serializer.Serialize(stream, portTowns);
             stream.Close();
         }
@@ -128,13 +128,13 @@ namespace TediousTravel
 
         public void LoadPortTowns(string dataPath)
         {
-            if (!File.Exists(Application.dataPath + dataPath + PORTTOWNS_FILE))
+            if (!File.Exists(dataPath + "//" + PORTTOWNS_FILE))
             {
                 GeneratePortTownData(dataPath);
             }
 
             var deserializer = new XmlSerializer(typeof(PortTowns));
-            var file = new FileStream(Application.dataPath + dataPath + PORTTOWNS_FILE, FileMode.Open);
+            var file = new FileStream(dataPath + "//" + PORTTOWNS_FILE, FileMode.Open);
             var loadedData = deserializer.Deserialize(file) as PortTowns;
             file.Close();
 

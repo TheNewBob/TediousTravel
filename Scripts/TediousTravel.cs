@@ -15,6 +15,7 @@ using DaggerfallWorkshop.Game.Serialization;
 using DaggerfallWorkshop.Game.Utility;
 using DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings;
 using DaggerfallWorkshop.Game.Entity;
+using DaggerfallWorkshop.Game.Weather;
 
 namespace TediousTravel
 {
@@ -41,9 +42,10 @@ namespace TediousTravel
 
         private bool delayCombat;
         private uint delayCombatTime;
+        private GameObject rain;
+        private GameObject snow;
 
 		public static Mod mod;
-        private bool encounter = false;
 
         private void Start()
         {
@@ -78,6 +80,9 @@ namespace TediousTravel
             SaveLoadManager.OnLoad += (saveData) => { destinationName = null; };
             StartGameBehaviour.OnNewGame += () => { destinationName = null; };
             GameManager.OnEncounter += GameManager_OnEncounter;
+
+            rain = GameManager.Instance.WeatherManager.PlayerWeather.RainParticles;
+            snow = GameManager.Instance.WeatherManager.PlayerWeather.SnowParticles;
         }
 
         private void SetTimeScale(int timeScale)
@@ -156,7 +161,6 @@ namespace TediousTravel
                 if (!travelUi.isShowing)
                 {
                     DaggerfallUI.UIManager.PushWindow(travelUi);
-                    encounter = false;
                 }
 
                 playerAutopilot.Update();
@@ -187,7 +191,6 @@ namespace TediousTravel
                         delayCombat = false;
                 }
             }
-
         }
 
         private void AttemptAvoid()
@@ -232,7 +235,7 @@ namespace TediousTravel
             {
                 SetTimeScale(1); // Essentially redundant, but still helpful, since the close window event takes longer to trigger the time downscale.
                 travelUi.CloseWindow();
-                encounter = true;
+                DaggerfallUI.MessageBox("You interrupt your journey.");
             }
         }
 
@@ -257,6 +260,7 @@ namespace TediousTravel
 
             this.destinationSummary = destinationSummary;
             DisableAnnoyingSounds();
+            DisableWeather();
             SetTimeScale(travelUi.TimeCompressionSetting);
             Debug.Log("started tedious travel");
         }
@@ -275,6 +279,7 @@ namespace TediousTravel
             playerAutopilot.MouseLookAtDestination();
             playerAutopilot = null;
             EnableAnnoyingSounds();
+            EnableWeather();
         }
 
         /// <summary>
@@ -292,6 +297,38 @@ namespace TediousTravel
         {
             GameManager.Instance.PlayerActivate.GetComponentInParent<PlayerFootsteps>().enabled = true;
             GameManager.Instance.TransportManager.RidingVolumeScale = 1f;
+        }
+
+        private void DisableWeather()
+        {
+            var weather = GameManager.Instance.WeatherManager.PlayerWeather;
+            rain.SetActive(false);
+            snow.SetActive(false);
+            weather.RainParticles = null;
+            weather.SnowParticles = null;
+        }
+
+        private void EnableWeather()
+        {
+            var weather = GameManager.Instance.WeatherManager.PlayerWeather;
+            weather.RainParticles = rain;
+            weather.SnowParticles = snow;
+            switch (weather.WeatherType)
+            {
+                case WeatherType.Rain:
+                case WeatherType.Thunder:
+                    rain.SetActive(true);
+                    snow.SetActive(false);
+                    break;
+                case WeatherType.Snow:
+                    rain.SetActive(false);
+                    snow.SetActive(true);
+                    break;
+                default:
+                    rain.SetActive(false);
+                    snow.SetActive(false);
+                    break;
+            }
         }
 
 
