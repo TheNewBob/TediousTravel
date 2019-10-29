@@ -49,9 +49,16 @@ namespace TediousTravel
 
 		public static Mod mod;
 
+        // Native Daggerfall ship travel calculation settings
+        public bool UseNativeDfShipCalculations { get; private set; }
+        public bool UseInnsWhenTravelingByShip { get; private set; }
+
         private void Start()
         {
             ModSettings settings = mod.GetSettings();
+
+            UseNativeDfShipCalculations = settings.GetValue<bool>("ShipTravelOptions", "EnableDaggerfallNativeShipTravel");
+            UseInnsWhenTravelingByShip = settings.GetValue<bool>("ShipTravelOptions", "UseInnsWhenTravelingByShip");
 
             encounterAvoidanceSystem = settings.GetValue<bool>("AvoidRandomEncounters", "AvoidRandomEncounters");
             maxSuccessChance = settings.GetValue<int>("AvoidRandomEncounters", "MaxChanceToAvoidEncounter");

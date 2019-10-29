@@ -177,6 +177,8 @@ namespace TediousTravel
         private string distanceRegionName = null;
         private IDistance distance;
 
+        ShipTravelCalculator shipTravelCalculator;
+
         #endregion
 
         #region Properties
@@ -240,6 +242,12 @@ namespace TediousTravel
                 Debug.LogError(string.Format("Error Registering Travelmap Console commands: {0}", ex.Message));
 
             }
+
+            // insantiate the appropraite ship travel calculator
+            if (controller.UseNativeDfShipCalculations)
+                shipTravelCalculator = new DaggerfallNativeShipCalculator(controller);
+            else
+                shipTravelCalculator = new TediousTravelShipCalculator();
         }
 
         #endregion
@@ -1336,26 +1344,12 @@ namespace TediousTravel
 
         void CreateShipTravelPopup()
         {
-            var travelTimeCalculator = new TravelTimeCalculator();
             var destinationPosition = MapsFile.GetPixelFromPixelID(locationSummary.ID);
-            int minutes = travelTimeCalculator.CalculateTravelTime(
-                destinationPosition,
-                false, false, true, false, false);
-
-            if (!PlayerOwnsShip())
-            {
-                minutes = (int)Math.Round((float)minutes * GetLocationTraveltimeModifier(
-                    GameManager.Instance.PlayerGPS.CurrentLocationType,
-                    locationSummary.LocationType));
-            }
+            TravelInfo travelInfo = shipTravelCalculator.CalculateTravelInfo(locationSummary, destinationPosition);
+            int minutes = travelInfo.travelTimeMinutes;
+            var tripCost = travelInfo.totalCost;
 
             var days = (int)Math.Ceiling((float)minutes / 1440);
-
-            var tripCost = 0;
-            if (!PlayerOwnsShip() && !GameManager.Instance.GuildManager.FreeShipTravel())
-            {
-                tripCost = days * 15;
-            }
 
             if (GameManager.Instance.PlayerEntity.GoldPieces < tripCost)
             {
@@ -1513,39 +1507,6 @@ namespace TediousTravel
                 return true;
 
             return false;
-        }
-
-        /// <summary>
-        /// Returns a modifier on travel time based on the quality of starting or arrival port.
-        /// The reasoning here is that traveling between two major ports will be fast, because a lot of ships
-        /// are sailing that route directly. Meanwhile, to sail from or to some forgotten fishing hamlet
-        /// will necessarily include waiting for ships to leave and jumping ship once or twice because nobody
-        /// is serving the route directly or regularly.
-        /// </summary>
-        /// <param name="startLocation"></param>
-        /// <param name="endLocation"></param>
-        /// <returns></returns>
-        float GetLocationTraveltimeModifier(DFRegion.LocationTypes startLocation, DFRegion.LocationTypes endLocation)
-        {
-            var modifier = 1f;
-
-            if (startLocation == DFRegion.LocationTypes.Tavern ||
-                endLocation == DFRegion.LocationTypes.Tavern)
-                modifier += 0.1f;
-
-            if (startLocation == DFRegion.LocationTypes.TownVillage ||
-                endLocation == DFRegion.LocationTypes.TownVillage ||
-                startLocation == DFRegion.LocationTypes.ReligionTemple ||
-                endLocation == DFRegion.LocationTypes.ReligionTemple)
-                modifier += 0.2f;
-
-            if (startLocation == DFRegion.LocationTypes.TownHamlet ||
-                endLocation == DFRegion.LocationTypes.TownHamlet ||
-                startLocation == DFRegion.LocationTypes.HomeWealthy ||
-                endLocation == DFRegion.LocationTypes.HomeWealthy)
-                modifier += 0.3f;
-
-            return modifier;
         }
 
         bool PlayerOwnsShip()

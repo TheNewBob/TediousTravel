@@ -24,6 +24,29 @@
                 }
             ],
             "$version": "v1"
+        },
+        {
+            "Name": "ShipTravelOptions",
+            "Description": "Native Daggerfall time calculation for ship travel",
+            "IsAdvanced": false,
+            "Keys": [
+                {
+                    "Value": false,
+                    "Name": "EnableDaggerfallNativeShipTravel",
+                    "Description": "Select whether to use the native Daggerfall time and cost calculation when traveling by ship. Only affects ship travel",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ToggleKey"
+                },
+                {
+                    "Value": false,
+                    "Name": "UseInnsWhenTravelingByShip",
+                    "Description": "Select whether or not to use inns or to camp out when traveling by Ship. Using inns will cost 5 GP per night on shore but can reduce the total travel time.",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ToggleKey"
+                }
+            ],
+            "$version": "v1"
         }
+
     ]
 }
