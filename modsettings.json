@@ -14,6 +14,13 @@
                     "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ToggleKey"
                 },
                 {
+                    "Value": false,
+                    "Name": "AttemptToAvoidRandomEncountersByDefault",
+                    "Description": "Enable Disable",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ToggleKey"
+                },
+                {
                     "Min": 1,
                     "Max": 100,
                     "Value": 80,

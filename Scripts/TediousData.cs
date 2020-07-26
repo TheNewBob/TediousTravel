@@ -14,7 +14,7 @@ namespace TediousTravel
         private const string PORTTOWNS_FILE = "porttowns.xml";
 
         // list of additional port towns
-        private List<KeyValuePair<string, string>> additionalPorts =
+        private List<KeyValuePair<string, string>> additionalPorts = 
             new List<KeyValuePair<string, string>> {
                 new KeyValuePair<string, string>("Isle of Balfiera", "Blackhead"),
                 new KeyValuePair<string, string>("Mournoth", "Zagoparia"),

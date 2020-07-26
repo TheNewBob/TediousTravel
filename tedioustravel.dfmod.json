@@ -18,6 +18,5 @@
         "Assets/Game/Mods/TediousTravel/Scripts/TediousData.cs",
         "Assets/Game/Mods/TediousTravel/modsettings.json",
         "Assets/Game/Mods/TediousTravel/modpresets.json"
-    ],
-    "Contributes": null
+    ]
 }
