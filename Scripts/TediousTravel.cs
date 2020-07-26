@@ -38,7 +38,6 @@ namespace TediousTravel
         private PlayerEntity playerEntity;
         private HUDVitals hudVitals;
 
-        private bool encounterAvoidanceSystem;
         private int maxSuccessChance;
 
         private bool delayCombat;
@@ -53,15 +52,31 @@ namespace TediousTravel
         public bool UseNativeDfShipCalculations { get; private set; }
         public bool UseInnsWhenTravelingByShip { get; private set; }
 
+        #region Settings
+
+        private enum AvoidEncounterChoice
+        {
+            NO = 0, ASK = 1, ALWAYS = 2
+        };
+
+        // These need to match the settings file section names. See modsettings.json
+        private const string SHIP_TRAVEL_OPTIONS_SETTINGS_SECTION = "ShipTravelOptions";
+        private const string RANDOM_ENCOUNTERS_SETTINGS_SECTION = "RandomEncounters";
+
+        private AvoidEncounterChoice avoidEncounters;
+
+        #endregion
+
         private void Start()
         {
             ModSettings settings = mod.GetSettings();
 
-            UseNativeDfShipCalculations = settings.GetValue<bool>("ShipTravelOptions", "EnableDaggerfallNativeShipTravel");
-            UseInnsWhenTravelingByShip = settings.GetValue<bool>("ShipTravelOptions", "UseInnsWhenTravelingByShip");
+            UseNativeDfShipCalculations = settings.GetValue<bool>(SHIP_TRAVEL_OPTIONS_SETTINGS_SECTION, "EnableDaggerfallNativeShipTravel");
+            UseInnsWhenTravelingByShip = settings.GetValue<bool>(SHIP_TRAVEL_OPTIONS_SETTINGS_SECTION, "UseInnsWhenTravelingByShip");
 
-            encounterAvoidanceSystem = settings.GetValue<bool>("AvoidRandomEncounters", "AvoidRandomEncounters");
-            maxSuccessChance = settings.GetValue<int>("AvoidRandomEncounters", "MaxChanceToAvoidEncounter");
+            int avoidEncounterInt = settings.GetValue<int>(RANDOM_ENCOUNTERS_SETTINGS_SECTION, "AvoidRandomEncounters");
+            avoidEncounters = (AvoidEncounterChoice)Enum.ToObject(typeof(AvoidEncounterChoice), avoidEncounterInt);
+            maxSuccessChance = settings.GetValue<int>(RANDOM_ENCOUNTERS_SETTINGS_SECTION, "MaxChanceToAvoidEncounter");
 
             hudVitals = DaggerfallUI.Instance.DaggerfallHUD.HUDVitals;
             playerEntity = GameManager.Instance.PlayerEntity;
@@ -182,7 +197,7 @@ namespace TediousTravel
                 {
                     Debug.Log("enemies nearby while fast travelling");
 
-                    if (encounterAvoidanceSystem)
+                    if (avoidEncounters != AvoidEncounterChoice.NO)
                     {
                         travelUi.CloseWindow();
                         AttemptAvoid();
@@ -215,6 +230,23 @@ namespace TediousTravel
             }
         }
 
+        private void MakeAvoidAttempt(int successChance)
+        {
+            if (Dice100.SuccessRoll(successChance))
+            {
+                delayCombat = true;
+                delayCombatTime = DaggerfallUnity.Instance.WorldTime.Now.ToClassicDaggerfallTime() + 10;
+                StartFastTravel(destinationSummary);
+            }
+            else
+            {
+                if (avoidEncounters == AvoidEncounterChoice.ALWAYS)
+                    DaggerfallUI.MessageBox("You failed to avoid an encounter!");
+                else
+                    DaggerfallUI.MessageBox("You failed to avoid the encounter!");
+            }
+        }
+
         private void AttemptAvoid()
         {
             int playerSkillRunning = playerEntity.Skills.GetLiveSkillValue(DFCareer.Skills.Running);
@@ -224,30 +256,24 @@ namespace TediousTravel
 
             successChance = successChance * maxSuccessChance / 100;
 
-            DaggerfallMessageBox mb = new DaggerfallMessageBox(DaggerfallUI.Instance.UserInterfaceManager);
-            mb.SetText("You approach a hostile encounter. Attempt to avoid it?");
-            mb.AddButton(DaggerfallMessageBox.MessageBoxButtons.Yes, true);
-            mb.AddButton(DaggerfallMessageBox.MessageBoxButtons.No);
-            mb.ParentPanel.BackgroundColor = Color.clear;
-
-            mb.OnButtonClick += (_sender, button) =>
+            if (avoidEncounters == AvoidEncounterChoice.ALWAYS)
+                MakeAvoidAttempt(successChance);
+            else
             {
-                _sender.CloseWindow();
-                if (button == DaggerfallMessageBox.MessageBoxButtons.Yes)
+                DaggerfallMessageBox mb = new DaggerfallMessageBox(DaggerfallUI.Instance.UserInterfaceManager);
+                mb.SetText("You approach a hostile encounter. Attempt to avoid it?");
+                mb.AddButton(DaggerfallMessageBox.MessageBoxButtons.Yes, true);
+                mb.AddButton(DaggerfallMessageBox.MessageBoxButtons.No);
+                mb.ParentPanel.BackgroundColor = Color.clear;
+
+                mb.OnButtonClick += (_sender, button) =>
                 {
-                    if (Dice100.SuccessRoll(successChance))
-                    {
-                        delayCombat = true;
-                        delayCombatTime = DaggerfallUnity.Instance.WorldTime.Now.ToClassicDaggerfallTime() + 10;
-                        StartFastTravel(destinationSummary);
-                    }
-                    else
-                    {
-                        DaggerfallUI.MessageBox("You failed to avoid the encounter!");
-                    }
-                }
-            };
-            mb.Show();
+                    _sender.CloseWindow();
+                    if (button == DaggerfallMessageBox.MessageBoxButtons.Yes)
+                        MakeAvoidAttempt(successChance);
+                };
+                mb.Show();
+            }
         }
 
 

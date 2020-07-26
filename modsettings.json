@@ -2,23 +2,21 @@
     "Version": "1.0",
     "Sections": [
         {
-            "Name": "AvoidRandomEncounters",
-            "Description": "Enable ability to avoid a random encounter based on the higher of the Running or Stealth skill.",
+            "Name": "RandomEncounters",
+            "Description": "Enable ability to attempt to avoid a random encounter based on the higher of the Running or Stealth skill.",
             "IsAdvanced": false,
             "Keys": [
                 {
-                    "Value": true,
+                    "Options": [
+                        "No. Let them play out",
+                        "Ask. Prompt on each encounter",
+                        "Always attempt to avoid"
+                    ],
+                    "Value": 0,
                     "Name": "AvoidRandomEncounters",
-                    "Description": "Enable Disable",
+                    "Description": null,
                     "$version": "v1",
-                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ToggleKey"
-                },
-                {
-                    "Value": false,
-                    "Name": "AttemptToAvoidRandomEncountersByDefault",
-                    "Description": "Enable Disable",
-                    "$version": "v1",
-                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ToggleKey"
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.MultipleChoiceKey"
                 },
                 {
                     "Min": 1,
